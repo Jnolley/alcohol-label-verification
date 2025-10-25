@@ -9,8 +9,7 @@ import { ICONS } from '../../../../shared/constants/icons';
   selector: 'app-verification-results',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './verification-results.component.html',
-  styleUrl: './verification-results.component.css'
+  templateUrl: './verification-results.component.html'
 })
 export class VerificationResultsComponent {
   result = input.required<VerificationResult>();

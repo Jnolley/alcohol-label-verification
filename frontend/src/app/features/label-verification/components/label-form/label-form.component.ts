@@ -8,8 +8,7 @@ import { VerificationResult } from '../../../../shared/models/verification-resul
   selector: 'app-label-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './label-form.component.html',
-  styleUrl: './label-form.component.css'
+  templateUrl: './label-form.component.html'
 })
 export class LabelFormComponent {
   formSubmit = output<LabelFormData>();

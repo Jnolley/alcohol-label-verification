@@ -42,7 +42,6 @@ export class VerificationController {
       if (error instanceof BaseException) {
         res.status(error.statusCode).json(errorResponse);
       } else {
-        console.error('Unexpected error:', error);
         res.status(500).json(errorResponse);
       }
     }

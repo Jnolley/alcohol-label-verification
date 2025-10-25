@@ -5,8 +5,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-image-upload',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './image-upload.component.html',
-  styleUrl: './image-upload.component.css'
+  templateUrl: './image-upload.component.html'
 })
 export class ImageUploadComponent {
   fileSelected = output<File>();
