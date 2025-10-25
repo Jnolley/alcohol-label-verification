@@ -37,37 +37,7 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          files: ./frontend/coverage/lcov.info
-          flags: frontend
-          name: frontend-coverage
-        continue-on-error: true
-
-  # E2E tests (optional - run only when needed)
-  e2e-tests:
-    name: Cypress E2E Tests
-    runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'run-e2e')
-    defaults:
-      run:
-        working-directory: ./frontend
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run Cypress tests
+      - name: Run Cypress E2E tests
         uses: cypress-io/github-action@v6
         with:
           working-directory: ./frontend
@@ -76,6 +46,16 @@ jobs:
           wait-on-timeout: 120
           browser: chrome
           headless: true
+          install: false
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+        continue-on-error: true
 
       - name: Upload Cypress screenshots
         uses: actions/upload-artifact@v4
