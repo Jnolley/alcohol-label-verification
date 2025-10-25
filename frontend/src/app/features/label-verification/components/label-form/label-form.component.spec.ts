@@ -118,7 +118,7 @@ describe('LabelFormComponent', () => {
       expect(emittedData.alcoholContent).toBe(45.5);
     });
 
-    it('should handle submission without optional netContents', () => {
+    it('should handle submission without optional netContentsValue', () => {
       let emittedData: any;
       component.formSubmit.subscribe(data => {
         emittedData = data;
@@ -128,13 +128,15 @@ describe('LabelFormComponent', () => {
         brandName: 'Test',
         productType: 'Bourbon',
         alcoholContent: 45,
-        netContents: ''
+        netContentsValue: '',
+        netContentsUnit: 'ml'
       });
 
       component.onSubmit();
 
       expect(emittedData).toBeDefined();
-      expect(emittedData.netContents).toBe('');
+      expect(emittedData.netContentsValue).toBeUndefined();
+      expect(emittedData.netContentsUnit).toBeUndefined();
     });
   });
 
