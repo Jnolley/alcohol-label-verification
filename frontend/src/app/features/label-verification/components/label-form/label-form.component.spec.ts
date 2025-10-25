@@ -272,8 +272,12 @@ describe('LabelFormComponent', () => {
       expect(component.alcoholContent).toBe(component.form.get('alcoholContent'));
     });
 
-    it('should provide access to netContents control', () => {
-      expect(component.netContents).toBe(component.form.get('netContents'));
+    it('should provide access to netContentsValue control', () => {
+      expect(component.netContentsValue).toBe(component.form.get('netContentsValue'));
+    });
+
+    it('should provide access to netContentsUnit control', () => {
+      expect(component.netContentsUnit).toBe(component.form.get('netContentsUnit'));
     });
   });
 });
