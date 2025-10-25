@@ -9,7 +9,8 @@ describe('Label Verification Flow', () => {
       brandName: 'Old Tom Distillery',
       productType: 'Kentucky Straight Bourbon Whiskey',
       alcoholContent: 45,
-      netContents: '750 mL'
+      netContentsValue: 750,
+      netContentsUnit: 'ml'
     });
 
     // Step 2: Upload image

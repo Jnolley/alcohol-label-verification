@@ -13,7 +13,8 @@ declare global {
         brandName: string;
         productType: string;
         alcoholContent: number;
-        netContents?: string;
+        netContentsValue?: number;
+        netContentsUnit?: string;
       }): Chainable<void>;
 
       /**
@@ -35,8 +36,11 @@ Cypress.Commands.add('fillLabelForm', (data) => {
   if (data.alcoholContent) {
     cy.get('[data-cy="alcohol-content-input"]').clear().type(data.alcoholContent.toString());
   }
-  if (data.netContents) {
-    cy.get('[data-cy="net-contents-input"]').clear().type(data.netContents);
+  if (data.netContentsValue) {
+    cy.get('[data-cy="net-contents-value-input"]').clear().type(data.netContentsValue.toString());
+  }
+  if (data.netContentsUnit) {
+    cy.get('[data-cy="net-contents-unit-select"]').select(data.netContentsUnit);
   }
 });
 
