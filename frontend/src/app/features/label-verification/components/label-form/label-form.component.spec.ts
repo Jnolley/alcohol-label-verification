@@ -58,13 +58,10 @@ describe('LabelFormComponent', () => {
   });
 
   describe('form submission', () => {
-    it('should emit formSubmit when form is valid and onSubmit called', (done) => {
+    it('should emit formSubmit when form is valid and onSubmit called', () => {
+      let emittedData: any;
       component.formSubmit.subscribe(data => {
-        expect(data.brandName).toBe('Test Brand');
-        expect(data.productType).toBe('Bourbon');
-        expect(data.alcoholContent).toBe(45);
-        expect(data.netContents).toBe('750mL');
-        done();
+        emittedData = data;
       });
 
       component.form.patchValue({
@@ -75,12 +72,18 @@ describe('LabelFormComponent', () => {
       });
 
       component.onSubmit();
+
+      expect(emittedData).toBeDefined();
+      expect(emittedData.brandName).toBe('Test Brand');
+      expect(emittedData.productType).toBe('Bourbon');
+      expect(emittedData.alcoholContent).toBe(45);
+      expect(emittedData.netContents).toBe('750mL');
     });
 
     it('should not emit when form is invalid', () => {
-      let emitted = false;
+      let emitCount = 0;
       component.formSubmit.subscribe(() => {
-        emitted = true;
+        emitCount++;
       });
 
       component.form.patchValue({
@@ -90,14 +93,13 @@ describe('LabelFormComponent', () => {
       });
 
       component.onSubmit();
-      expect(emitted).toBe(false);
+      expect(emitCount).toBe(0);
     });
 
-    it('should convert alcoholContent to number', (done) => {
+    it('should convert alcoholContent to number', () => {
+      let emittedData: any;
       component.formSubmit.subscribe(data => {
-        expect(typeof data.alcoholContent).toBe('number');
-        expect(data.alcoholContent).toBe(45.5);
-        done();
+        emittedData = data;
       });
 
       component.form.patchValue({
@@ -107,12 +109,16 @@ describe('LabelFormComponent', () => {
       });
 
       component.onSubmit();
+
+      expect(emittedData).toBeDefined();
+      expect(typeof emittedData.alcoholContent).toBe('number');
+      expect(emittedData.alcoholContent).toBe(45.5);
     });
 
-    it('should handle submission without optional netContents', (done) => {
+    it('should handle submission without optional netContents', () => {
+      let emittedData: any;
       component.formSubmit.subscribe(data => {
-        expect(data.netContents).toBe('');
-        done();
+        emittedData = data;
       });
 
       component.form.patchValue({
@@ -123,6 +129,9 @@ describe('LabelFormComponent', () => {
       });
 
       component.onSubmit();
+
+      expect(emittedData).toBeDefined();
+      expect(emittedData.netContents).toBe('');
     });
   });
 
