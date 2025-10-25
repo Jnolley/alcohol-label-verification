@@ -1,82 +1,150 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
-  <!-- Brand Name -->
-  <div>
-    <label for="brandName" class="block text-sm font-medium text-gray-900 mb-1.5">
-      Brand Name <span class="text-error">*</span>
-    </label>
-    <input
-      id="brandName"
-      type="text"
-      formControlName="brandName"
-      placeholder="e.g., Old Tom Distillery"
-      class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-      [class.border-error]="brandName?.invalid && brandName?.touched"
-      [class.border-gray-300]="brandName?.valid || !brandName?.touched"
-    />
-    @if (brandName?.invalid && brandName?.touched) {
-      <p class="mt-1 text-sm text-error">Brand name is required</p>
-    }
-  </div>
-
-  <!-- Product Class/Type -->
-  <div>
-    <label for="productType" class="block text-sm font-medium text-gray-900 mb-1.5">
-      Product Class/Type <span class="text-error">*</span>
-    </label>
-    <input
-      id="productType"
-      type="text"
-      formControlName="productType"
-      placeholder="e.g., Kentucky Straight Bourbon Whiskey, IPA"
-      class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-      [class.border-error]="productType?.invalid && productType?.touched"
-      [class.border-gray-300]="productType?.valid || !productType?.touched"
-    />
-    @if (productType?.invalid && productType?.touched) {
-      <p class="mt-1 text-sm text-error">Product type is required</p>
-    }
-  </div>
-
-  <!-- Alcohol Content -->
-  <div>
-    <label for="alcoholContent" class="block text-sm font-medium text-gray-900 mb-1.5">
-      Alcohol Content (ABV %) <span class="text-error">*</span>
-    </label>
-    <input
-      id="alcoholContent"
-      type="number"
-      formControlName="alcoholContent"
-      placeholder="e.g., 45"
-      min="0"
-      max="100"
-      step="0.1"
-      class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-      [class.border-error]="alcoholContent?.invalid && alcoholContent?.touched"
-      [class.border-gray-300]="alcoholContent?.valid || !alcoholContent?.touched"
-    />
-    @if (alcoholContent?.invalid && alcoholContent?.touched) {
-      <p class="mt-1 text-sm text-error">
-        @if (alcoholContent?.errors?.['required']) {
-          Alcohol content is required
+    <!-- Brand Name -->
+    <div>
+      <label for="brandName" class="block text-sm font-medium text-gray-900 mb-1.5">
+        Brand Name <span class="text-error">*</span>
+        @if (getFieldCheck('BRAND_NAME')) {
+          @if (getFieldCheck('BRAND_NAME')!.status === 'MATCH') {
+            <span class="ml-2 text-xs text-success">✓ Verified</span>
+          } @else if (getFieldCheck('BRAND_NAME')!.status === 'NOT_FOUND') {
+            <span class="ml-2 text-xs text-warning">⚠ Not found on label</span>
+          }
         }
-        @if (alcoholContent?.errors?.['min'] || alcoholContent?.errors?.['max']) {
-          Must be between 0 and 100
-        }
-      </p>
-    }
-  </div>
+      </label>
+      <input
+        id="brandName"
+        type="text"
+        formControlName="brandName"
+        placeholder="e.g., Old Tom Distillery"
+        data-cy="brand-name-input"
+        class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+        [ngClass]="getFieldStatusClass('BRAND_NAME') || (brandName?.invalid && brandName?.touched ? 'border-error' : 'border-gray-300')"
+      />
+      @if (brandName?.invalid && brandName?.touched) {
+        <p class="mt-1 text-sm text-error">Brand name is required</p>
+      }
+      @if (getFieldCheck('BRAND_NAME') && getFieldCheck('BRAND_NAME')!.status !== 'MATCH') {
+        <p class="mt-1 text-sm" [ngClass]="{
+          'text-error': getFieldCheck('BRAND_NAME')!.status === 'MISMATCH',
+          'text-warning': getFieldCheck('BRAND_NAME')!.status === 'NOT_FOUND'
+        }">{{ getFieldCheck('BRAND_NAME')!.message }}</p>
+      }
+    </div>
 
-  <!-- Net Contents (Optional) -->
-  <div>
-    <label for="netContents" class="block text-sm font-medium text-gray-900 mb-1.5">
-      Net Contents <span class="text-gray-500 text-xs font-normal">(Optional)</span>
-    </label>
-    <input
-      id="netContents"
-      type="text"
-      formControlName="netContents"
-      placeholder="e.g., 750 mL, 12 fl oz"
-      class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-    />
-  </div>
-</form>
+    <!-- Product Class/Type -->
+    <div>
+      <label for="productType" class="block text-sm font-medium text-gray-900 mb-1.5">
+        Product Class/Type <span class="text-error">*</span>
+        @if (getFieldCheck('PRODUCT_TYPE')) {
+          @if (getFieldCheck('PRODUCT_TYPE')!.status === 'MATCH') {
+            <span class="ml-2 text-xs text-success">✓ Verified</span>
+          } @else if (getFieldCheck('PRODUCT_TYPE')!.status === 'NOT_FOUND') {
+            <span class="ml-2 text-xs text-warning">⚠ Not found on label</span>
+          }
+        }
+      </label>
+      <input
+        id="productType"
+        type="text"
+        formControlName="productType"
+        placeholder="e.g., Kentucky Straight Bourbon Whiskey, IPA"
+        data-cy="product-type-input"
+        class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+        [ngClass]="getFieldStatusClass('PRODUCT_TYPE') || (productType?.invalid && productType?.touched ? 'border-error' : 'border-gray-300')"
+      />
+      @if (productType?.invalid && productType?.touched) {
+        <p class="mt-1 text-sm text-error">Product type is required</p>
+      }
+      @if (getFieldCheck('PRODUCT_TYPE') && getFieldCheck('PRODUCT_TYPE')!.status !== 'MATCH') {
+        <p class="mt-1 text-sm" [ngClass]="{
+          'text-error': getFieldCheck('PRODUCT_TYPE')!.status === 'MISMATCH',
+          'text-warning': getFieldCheck('PRODUCT_TYPE')!.status === 'NOT_FOUND'
+        }">{{ getFieldCheck('PRODUCT_TYPE')!.message }}</p>
+      }
+    </div>
+
+    <!-- Alcohol Content -->
+    <div>
+      <label for="alcoholContent" class="block text-sm font-medium text-gray-900 mb-1.5">
+        Alcohol Content (ABV %) <span class="text-error">*</span>
+        @if (getFieldCheck('ALCOHOL_CONTENT')) {
+          @if (getFieldCheck('ALCOHOL_CONTENT')!.status === 'MATCH') {
+            <span class="ml-2 text-xs text-success">✓ Verified</span>
+          } @else if (getFieldCheck('ALCOHOL_CONTENT')!.status === 'NOT_FOUND') {
+            <span class="ml-2 text-xs text-warning">⚠ Not found on label</span>
+          }
+        }
+      </label>
+      <input
+        id="alcoholContent"
+        type="number"
+        formControlName="alcoholContent"
+        placeholder="e.g., 45"
+        min="0"
+        max="100"
+        step="0.1"
+        data-cy="alcohol-content-input"
+        class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+        [ngClass]="getFieldStatusClass('ALCOHOL_CONTENT') || (alcoholContent?.invalid && alcoholContent?.touched ? 'border-error' : 'border-gray-300')"
+      />
+      @if (alcoholContent?.invalid && alcoholContent?.touched) {
+        <p class="mt-1 text-sm text-error">
+          @if (alcoholContent?.errors?.['required']) {
+            Alcohol content is required
+          }
+          @if (alcoholContent?.errors?.['min'] || alcoholContent?.errors?.['max']) {
+            Must be between 0 and 100
+          }
+        </p>
+      }
+      @if (getFieldCheck('ALCOHOL_CONTENT') && getFieldCheck('ALCOHOL_CONTENT')!.status !== 'MATCH') {
+        <p class="mt-1 text-sm" [ngClass]="{
+          'text-error': getFieldCheck('ALCOHOL_CONTENT')!.status === 'MISMATCH',
+          'text-warning': getFieldCheck('ALCOHOL_CONTENT')!.status === 'NOT_FOUND'
+        }">{{ getFieldCheck('ALCOHOL_CONTENT')!.message }}</p>
+      }
+    </div>
+
+    <!-- Net Contents (Optional) -->
+    <div>
+      <label for="netContentsValue" class="block text-sm font-medium text-gray-900 mb-1.5">
+        Net Contents <span class="text-gray-500 text-xs font-normal">(Optional)</span>
+        @if (getFieldCheck('NET_CONTENTS')) {
+          @if (getFieldCheck('NET_CONTENTS')!.status === 'MATCH') {
+            <span class="ml-2 text-xs text-success">✓ Verified</span>
+          } @else if (getFieldCheck('NET_CONTENTS')!.status === 'NOT_FOUND') {
+            <span class="ml-2 text-xs text-warning">⚠ Not found on label</span>
+          }
+        }
+      </label>
+      <div class="flex gap-2">
+        <input
+          id="netContentsValue"
+          type="number"
+          formControlName="netContentsValue"
+          placeholder="e.g., 750"
+          min="0"
+          step="0.1"
+          data-cy="net-contents-value-input"
+          class="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+          [ngClass]="getFieldStatusClass('NET_CONTENTS') || 'border-gray-300'"
+        />
+        <select
+          id="netContentsUnit"
+          formControlName="netContentsUnit"
+          data-cy="net-contents-unit-select"
+          class="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          @for (unit of volumeUnits; track unit) {
+            <option [value]="unit">{{ unit }}</option>
+          }
+        </select>
+      </div>
+      @if (getFieldCheck('NET_CONTENTS') && getFieldCheck('NET_CONTENTS')!.status !== 'MATCH') {
+        <p class="mt-1 text-sm" [ngClass]="{
+          'text-error': getFieldCheck('NET_CONTENTS')!.status === 'MISMATCH',
+          'text-warning': getFieldCheck('NET_CONTENTS')!.status === 'NOT_FOUND'
+        }">{{ getFieldCheck('NET_CONTENTS')!.message }}</p>
+      }
+    </div>
+  </form>

@@ -31,8 +31,8 @@ src/
 │   ├── shared/
 │   │   ├── models/
 │   │   ├── enums/
-│   │   ├── validators/
-│   │   └── fakers/
+│   │   ├── constants/
+│   │   └── components/
 │   │
 │   └── features/
 │       └── label-verification/
@@ -58,8 +58,10 @@ src/
 
 - **Models** - TypeScript interfaces (contracts)
 - **Enums** - Application enumerations
-- **Validators** - Form validators
-- **Fakers** - Test data generators
+- **Constants** - Shared constants (e.g., icons)
+- **Components** - Shared components (e.g., toast-container)
+
+**Note:** Validators are handled via Angular's built-in `Validators` from `@angular/forms`. Test data generators (fakers) are not currently implemented as they are optional for MVP.
 
 ### Feature Layer
 **Purpose:** Label verification feature

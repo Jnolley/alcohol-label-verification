@@ -12,6 +12,9 @@ export interface LabelFormData {
   /** Alcohol by volume percentage (0-100) */
   alcoholContent: number;
 
-  /** Net contents/volume (e.g., "750 mL", "12 fl oz") - Optional */
-  netContents?: string;
+  /** Net contents volume value (e.g., 750, 12) - Optional */
+  netContentsValue?: number;
+
+  /** Net contents unit (e.g., "ml", "cl", "L", "fl oz") - Optional */
+  netContentsUnit?: string;
 }

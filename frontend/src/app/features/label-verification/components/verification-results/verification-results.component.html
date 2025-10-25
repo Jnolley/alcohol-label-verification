@@ -5,7 +5,6 @@
     'bg-red-50 border-error': !result().success
   }">
     <div class="flex items-start gap-3">
-      <!-- Success Icon -->
       @if (result().success) {
         <svg class="status-icon-large text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="icons.checkCircle" />
