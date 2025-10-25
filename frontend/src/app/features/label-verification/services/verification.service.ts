@@ -1,9 +1,28 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { VerificationRequest } from '../../../shared/models/verification-request.model';
+import { VerificationResult } from '../../../shared/models/verification-result.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class VerificationService {
+  private http = inject(HttpClient);
+  private apiUrl = 'http://localhost:3000/api';
 
-  constructor() { }
+  verifyLabel(request: VerificationRequest): Observable<VerificationResult> {
+    const formData = new FormData();
+    formData.append('brandName', request.formData.brandName);
+    formData.append('productType', request.formData.productType);
+    formData.append('alcoholContent', request.formData.alcoholContent.toString());
+
+    if (request.formData.netContents) {
+      formData.append('netContents', request.formData.netContents);
+    }
+
+    formData.append('image', request.imageFile);
+
+    return this.http.post<VerificationResult>(`${this.apiUrl}/verify`, formData);
+  }
 }
