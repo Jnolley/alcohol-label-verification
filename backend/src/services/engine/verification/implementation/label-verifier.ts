@@ -1,9 +1,11 @@
 import { ILabelVerifier } from '../interface/label-verifier.interface';
 import { FormData, VerificationResult, FieldCheck, FieldType, MatchStatus } from '../../../../common';
 import { ExtractedText } from '../../ocr';
+import { INormalizer } from '../../../utility/normalization';
 import config from '../../../../config';
 
 export class LabelVerifier implements ILabelVerifier {
+  constructor(private readonly normalizer: INormalizer) {}
 
   verify(formData: FormData, extractedText: ExtractedText): VerificationResult {
     const fieldChecks: FieldCheck[] = [
@@ -12,8 +14,8 @@ export class LabelVerifier implements ILabelVerifier {
       this.verifyAlcoholContent(formData.alcoholContent, extractedText.normalized),
     ];
 
-    if (formData.netContents) {
-      fieldChecks.push(this.verifyNetContents(formData.netContents, extractedText.normalized));
+    if (formData.netContentsValue && formData.netContentsUnit) {
+      fieldChecks.push(this.verifyNetContents(formData.netContentsValue, formData.netContentsUnit, extractedText.normalized));
     }
 
     fieldChecks.push(this.verifyGovernmentWarning(extractedText.normalized));
@@ -31,7 +33,16 @@ export class LabelVerifier implements ILabelVerifier {
     const normalizedBrand = this.removePunctuation(brandName.toUpperCase().trim());
     const normalizedExtracted = this.removePunctuation(extractedText);
 
+    console.log('🔍 Brand Name Verification:');
+    console.log('  Input brand:', brandName);
+    console.log('  Normalized brand:', normalizedBrand);
+    console.log('  Extracted text length:', extractedText.length);
+    console.log('  Extracted text (first 200 chars):', extractedText.substring(0, 200));
+    console.log('  Normalized extracted (first 200 chars):', normalizedExtracted.substring(0, 200));
+
+    // Exact match required - no fuzzy logic
     if (normalizedExtracted.includes(normalizedBrand)) {
+      console.log('  ✓ Exact match found');
       return {
         fieldType: FieldType.BrandName,
         status: MatchStatus.Match,
@@ -41,21 +52,7 @@ export class LabelVerifier implements ILabelVerifier {
       };
     }
 
-    const brandWords = this.splitByWhitespace(normalizedBrand);
-    const foundWords = brandWords.filter(word =>
-      word.length > 2 && normalizedExtracted.includes(word)
-    );
-
-    if (foundWords.length >= brandWords.length * config.verification.brandNameMinWordMatch) {
-      return {
-        fieldType: FieldType.BrandName,
-        status: MatchStatus.Match,
-        message: 'Brand name found on label',
-        expected: brandName,
-        found: foundWords.join(' '),
-      };
-    }
-
+    console.log('  ✗ No exact match');
     return {
       fieldType: FieldType.BrandName,
       status: MatchStatus.NotFound,
@@ -65,24 +62,26 @@ export class LabelVerifier implements ILabelVerifier {
   }
 
   private verifyProductType(productType: string, extractedText: string): FieldCheck {
-    const normalizedType = productType.toUpperCase().trim();
-    const keywords = this.splitByWhitespace(normalizedType);
+    const normalizedType = this.removePunctuation(productType.toUpperCase().trim());
+    const normalizedExtracted = this.removePunctuation(extractedText);
 
-    // Check if any significant keywords are present
-    const foundKeywords = keywords.filter(keyword =>
-      keyword.length > 2 && extractedText.includes(keyword)
-    );
+    console.log('🔍 Product Type Verification:');
+    console.log('  Input type:', productType);
+    console.log('  Normalized type:', normalizedType);
 
-    if (foundKeywords.length >= config.verification.productTypeMinKeywordMatch) {
+    // Exact match required - no fuzzy logic
+    if (normalizedExtracted.includes(normalizedType)) {
+      console.log('  ✓ Exact match found');
       return {
         fieldType: FieldType.ProductType,
         status: MatchStatus.Match,
         message: 'Product type found on label',
         expected: productType,
-        found: foundKeywords.join(' '),
+        found: productType,
       };
     }
 
+    console.log('  ✗ No exact match');
     return {
       fieldType: FieldType.ProductType,
       status: MatchStatus.NotFound,
@@ -173,41 +172,49 @@ export class LabelVerifier implements ILabelVerifier {
     return char >= '0' && char <= '9';
   }
 
-  private verifyNetContents(netContents: string, extractedText: string): FieldCheck {
-    const normalizedExpected = this.removeWhitespace(netContents.toUpperCase());
-    const normalizedText = this.removeWhitespace(extractedText);
+  private verifyNetContents(value: number, unit: string, extractedText: string): FieldCheck {
+    // Convert user input to milliliters
+    const expectedMl = this.normalizer.convertToMilliliters(value, unit);
 
-    if (normalizedText.includes(normalizedExpected)) {
-      return {
-        fieldType: FieldType.NetContents,
-        status: MatchStatus.Match,
-        message: 'Net contents matches',
-        expected: netContents,
-        found: netContents,
-      };
-    }
+    console.log('🔍 Net Contents Verification:');
+    console.log('  Input:', value, unit);
+    console.log('  Expected (ml):', expectedMl);
+    console.log('  Extracted text (first 200 chars):', extractedText.substring(0, 200));
 
-    // Extract numbers from expected value
-    const expectedNumbers = this.extractNumbers(netContents);
+    // Try to extract volume from label using normalizer
+    const extractedMl = this.normalizer.normalizeVolume(extractedText);
 
-    // Look for any of these numbers in the text
-    for (const num of expectedNumbers) {
-      if (extractedText.includes(num)) {
+    if (extractedMl !== null) {
+      console.log('  Found volume (ml):', extractedMl);
+
+      // Exact match required - no tolerance
+      if (extractedMl === expectedMl) {
+        console.log('  ✓ Exact match!');
         return {
           fieldType: FieldType.NetContents,
           status: MatchStatus.Match,
-          message: 'Net contents found on label',
-          expected: netContents,
-          found: num,
+          message: 'Net contents matches',
+          expected: `${value} ${unit}`,
+          found: `${extractedMl} ml`,
         };
       }
+
+      console.log('  ✗ Volume mismatch - expected:', expectedMl, 'found:', extractedMl);
+      return {
+        fieldType: FieldType.NetContents,
+        status: MatchStatus.Mismatch,
+        message: 'Net contents does not match label',
+        expected: `${value} ${unit} (${expectedMl} ml)`,
+        found: `${extractedMl} ml`,
+      };
     }
 
+    console.log('  ✗ No volume found in extracted text');
     return {
       fieldType: FieldType.NetContents,
       status: MatchStatus.NotFound,
       message: 'Net contents not found on label',
-      expected: netContents,
+      expected: `${value} ${unit}`,
     };
   }
 

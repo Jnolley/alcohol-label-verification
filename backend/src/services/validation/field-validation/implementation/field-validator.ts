@@ -7,8 +7,9 @@ export class FieldValidator implements IFieldValidator {
     this.validateProductType(formData.productType);
     this.validateAlcoholContent(formData.alcoholContent);
 
-    if (formData.netContents !== undefined && formData.netContents !== null) {
-      this.validateNetContents(formData.netContents);
+    // Net contents is optional - only validate if provided
+    if (formData.netContentsValue !== undefined || formData.netContentsUnit !== undefined) {
+      this.validateNetContents(formData.netContentsValue, formData.netContentsUnit);
     }
   }
 
@@ -46,13 +47,22 @@ export class FieldValidator implements IFieldValidator {
     }
   }
 
-  private validateNetContents(netContents: string): void {
-    if (netContents.trim().length === 0) {
-      throw new FieldValidationException('Net contents cannot be empty if provided', 'netContents');
+  private validateNetContents(value?: number, unit?: string): void {
+    // If value is provided, unit must also be provided
+    if (value !== undefined && !unit) {
+      throw new FieldValidationException('Net contents unit is required when value is provided', 'netContentsUnit');
+    }
+    if (unit && value === undefined) {
+      throw new FieldValidationException('Net contents value is required when unit is provided', 'netContentsValue');
+    }
+    if (value !== undefined && value <= 0) {
+      throw new FieldValidationException('Net contents value must be greater than 0', 'netContentsValue');
     }
 
-    if (netContents.length > 100) {
-      throw new FieldValidationException('Net contents cannot exceed 100 characters', 'netContents');
+    // Validate unit is one of the allowed values
+    const allowedUnits = ['ml', 'cl', 'L', 'fl oz', 'gal'];
+    if (unit && !allowedUnits.includes(unit)) {
+      throw new FieldValidationException(`Net contents unit must be one of: ${allowedUnits.join(', ')}`, 'netContentsUnit');
     }
   }
 }

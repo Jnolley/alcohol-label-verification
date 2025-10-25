@@ -108,6 +108,31 @@ export class Normalizer implements INormalizer {
     return null;
   }
 
+  /**
+   * Converts a volume value with a unit to milliliters
+   * @param value The numeric value
+   * @param unit The unit (ml, cl, L, fl oz, gal)
+   * @returns The volume in milliliters
+   */
+  convertToMilliliters(value: number, unit: string): number {
+    const normalizedUnit = unit.toLowerCase().trim();
+
+    switch (normalizedUnit) {
+      case 'ml':
+        return value;
+      case 'cl':
+        return value * 10;
+      case 'l':
+        return value * 1000;
+      case 'fl oz':
+        return value * 29.5735; // 1 fl oz ≈ 29.5735 ml
+      case 'gal':
+        return value * 3785.41; // 1 US gallon ≈ 3785.41 ml
+      default:
+        return value; // Default to assuming ml if unit is unknown
+    }
+  }
+
   private isDigit(char: string): boolean {
     return char >= '0' && char <= '9';
   }

@@ -1,4 +1,4 @@
-import { createWorker } from 'tesseract.js';
+import { createWorker, PSM } from 'tesseract.js';
 import { ITextExtractor } from '../interface/text-extractor.interface';
 import { ExtractedText } from '../contracts/extracted-text';
 import { OCRException } from '../../../../common/exceptions';
@@ -9,6 +9,13 @@ export class TextExtractor implements ITextExtractor {
     const worker = await createWorker(config.ocr.language);
 
     try {
+      // Set Tesseract parameters for better label reading
+      // PSM 11: Sparse text - find as much text as possible in no particular order
+      await worker.setParameters({
+        tessedit_pageseg_mode: PSM.SPARSE_TEXT,
+        preserve_interword_spaces: '1',
+      });
+
       const { data } = await worker.recognize(buffer);
 
       // Check if any text was extracted

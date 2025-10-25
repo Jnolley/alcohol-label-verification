@@ -6,6 +6,7 @@ import { FieldValidator } from './services/validation/field-validation';
 import { ImageValidator } from './services/utility/image-processing';
 import { TextExtractor } from './services/engine/ocr';
 import { LabelVerifier } from './services/engine/verification';
+import { Normalizer } from './services/utility/normalization';
 
 export function createApp() {
   const app = express();
@@ -31,7 +32,8 @@ export function createApp() {
   const fieldValidator = new FieldValidator();
   const imageValidator = new ImageValidator();
   const textExtractor = new TextExtractor();
-  const labelVerifier = new LabelVerifier();
+  const normalizer = new Normalizer();
+  const labelVerifier = new LabelVerifier(normalizer);
 
   const verificationManager = new VerificationManager(
     fieldValidator,

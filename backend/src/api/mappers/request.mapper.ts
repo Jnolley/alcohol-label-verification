@@ -7,7 +7,8 @@ export class RequestMapper {
       brandName: request.brandName,
       productType: request.productType,
       alcoholContent: parseFloat(request.alcoholContent),
-      netContents: request.netContents,
+      netContentsValue: request.netContentsValue ? parseFloat(request.netContentsValue) : undefined,
+      netContentsUnit: request.netContentsUnit,
     };
   }
 }
