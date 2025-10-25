@@ -8,7 +8,8 @@ describe('Label Form Validation', () => {
     cy.get('[data-cy="brand-name-input"]').should('exist');
     cy.get('[data-cy="product-type-input"]').should('exist');
     cy.get('[data-cy="alcohol-content-input"]').should('exist');
-    cy.get('[data-cy="net-contents-input"]').should('exist');
+    cy.get('[data-cy="net-contents-value-input"]').should('exist');
+    cy.get('[data-cy="net-contents-unit-select"]').should('exist');
   });
 
   it('should show validation errors for required fields', () => {
@@ -21,7 +22,8 @@ describe('Label Form Validation', () => {
       brandName: 'Old Tom Distillery',
       productType: 'Kentucky Straight Bourbon Whiskey',
       alcoholContent: 45,
-      netContents: '750 mL'
+      netContentsValue: 750,
+      netContentsUnit: 'ml'
     });
 
     // Submit should still be disabled without image
@@ -53,6 +55,6 @@ describe('Label Form Validation', () => {
     });
 
     // Net contents is optional, form should still be valid
-    cy.get('[data-cy="net-contents-input"]').should('not.have.class', 'ng-invalid');
+    cy.get('[data-cy="net-contents-value-input"]').should('not.have.class', 'ng-invalid');
   });
 });

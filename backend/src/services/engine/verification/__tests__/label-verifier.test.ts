@@ -1,12 +1,32 @@
 import { LabelVerifier } from '../implementation/label-verifier';
 import { FormData, FieldType, MatchStatus } from '../../../../common';
 import { ExtractedText } from '../../ocr';
+import { INormalizer } from '../../../utility/normalization';
 
 describe('LabelVerifier', () => {
   let verifier: LabelVerifier;
+  let mockNormalizer: jest.Mocked<INormalizer>;
 
   beforeEach(() => {
-    verifier = new LabelVerifier();
+    mockNormalizer = {
+      normalizeAbv: jest.fn(),
+      normalizeVolume: jest.fn((text: string) => {
+        // Simple string-based extraction matching real normalizer behavior
+        const upper = text.toUpperCase();
+        if (upper.includes('750ML') || upper.includes('750 ML') || upper.includes('750 MILLILITERS')) return 750;
+        if (upper.includes('1L') || upper.includes('1 L') || upper.includes('1 LITERS')) return 1000;
+        if (upper.includes('75CL') || upper.includes('75 CL') || upper.includes('75 CENTILITERS')) return 750;
+        return null;
+      }),
+      convertToMilliliters: jest.fn((value: number, unit: string) => {
+        const lowerUnit = unit.toLowerCase();
+        if (lowerUnit === 'ml') return value;
+        if (lowerUnit === 'cl') return value * 10;
+        if (lowerUnit === 'l') return value * 1000;
+        return value;
+      }),
+    };
+    verifier = new LabelVerifier(mockNormalizer);
   });
 
   const createExtractedText = (text: string, confidence: number = 90): ExtractedText => ({
@@ -21,7 +41,8 @@ describe('LabelVerifier', () => {
         brandName: 'Old Tom Distillery',
         productType: 'Kentucky Straight Bourbon Whiskey',
         alcoholContent: 45,
-        netContents: '750 mL',
+        netContentsValue: 750,
+        netContentsUnit: 'ml',
       };
 
       const fullWarning =
@@ -408,7 +429,8 @@ describe('LabelVerifier', () => {
         brandName: 'Test',
         productType: 'Bourbon',
         alcoholContent: 45,
-        netContents: '750 mL',
+        netContentsValue: 750,
+        netContentsUnit: 'mL',
       };
 
       const extractedText = createExtractedText('TEST BOURBON 45% 750ML');
@@ -425,7 +447,8 @@ describe('LabelVerifier', () => {
         brandName: 'Test',
         productType: 'Bourbon',
         alcoholContent: 45,
-        netContents: '750 mL',
+        netContentsValue: 750,
+        netContentsUnit: 'mL',
       };
 
       const extractedText = createExtractedText('TEST BOURBON 45% 750ML');
@@ -442,7 +465,8 @@ describe('LabelVerifier', () => {
         brandName: 'Test',
         productType: 'Bourbon',
         alcoholContent: 45,
-        netContents: '750 ml',
+        netContentsValue: 750,
+        netContentsUnit: 'ml',
       };
 
       const extractedText = createExtractedText('TEST BOURBON 45% 750ML');
@@ -459,7 +483,8 @@ describe('LabelVerifier', () => {
         brandName: 'Test',
         productType: 'Bourbon',
         alcoholContent: 45,
-        netContents: '750mL',
+        netContentsValue: 750,
+        netContentsUnit: 'mL',
       };
 
       const extractedText = createExtractedText('TEST BOURBON 45% NET: 750 MILLILITERS');
@@ -476,7 +501,8 @@ describe('LabelVerifier', () => {
         brandName: 'Test',
         productType: 'Bourbon',
         alcoholContent: 45,
-        netContents: '1L',
+        netContentsValue: 1,
+        netContentsUnit: 'L',
       };
 
       const extractedText = createExtractedText('TEST BOURBON 45% 750ML');
@@ -485,7 +511,8 @@ describe('LabelVerifier', () => {
       const netContentsCheck = result.fieldChecks.find(
         (check) => check.fieldType === FieldType.NetContents
       );
-      expect(netContentsCheck?.status).toBe(MatchStatus.NotFound);
+      // Mismatch because we found 750ml but expected 1000ml (1L)
+      expect(netContentsCheck?.status).toBe(MatchStatus.Mismatch);
     });
   });
 
@@ -614,7 +641,8 @@ describe('LabelVerifier', () => {
         brandName: 'Old Tom Distillery',
         productType: 'Bourbon',
         alcoholContent: 45,
-        netContents: '750mL',
+        netContentsValue: 750,
+        netContentsUnit: 'mL',
       };
 
       const longText =

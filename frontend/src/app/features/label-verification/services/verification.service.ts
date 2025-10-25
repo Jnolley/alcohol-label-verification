@@ -18,8 +18,9 @@ export class VerificationService {
     formData.append('productType', request.formData.productType);
     formData.append('alcoholContent', request.formData.alcoholContent.toString());
 
-    if (request.formData.netContents) {
-      formData.append('netContents', request.formData.netContents);
+    if (request.formData.netContentsValue && request.formData.netContentsUnit) {
+      formData.append('netContentsValue', request.formData.netContentsValue.toString());
+      formData.append('netContentsUnit', request.formData.netContentsUnit);
     }
 
     formData.append('image', request.imageFile);

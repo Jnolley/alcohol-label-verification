@@ -107,7 +107,7 @@
 
     <!-- Net Contents (Optional) -->
     <div>
-      <label for="netContents" class="block text-sm font-medium text-gray-900 mb-1.5">
+      <label for="netContentsValue" class="block text-sm font-medium text-gray-900 mb-1.5">
         Net Contents <span class="text-gray-500 text-xs font-normal">(Optional)</span>
         @if (getFieldCheck('NET_CONTENTS')) {
           @if (getFieldCheck('NET_CONTENTS')!.status === 'MATCH') {
@@ -117,15 +117,29 @@
           }
         }
       </label>
-      <input
-        id="netContents"
-        type="text"
-        formControlName="netContents"
-        placeholder="e.g., 750 mL, 12 fl oz"
-        data-cy="net-contents-input"
-        class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-        [ngClass]="getFieldStatusClass('NET_CONTENTS') || 'border-gray-300'"
-      />
+      <div class="flex gap-2">
+        <input
+          id="netContentsValue"
+          type="number"
+          formControlName="netContentsValue"
+          placeholder="e.g., 750"
+          min="0"
+          step="0.1"
+          data-cy="net-contents-value-input"
+          class="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+          [ngClass]="getFieldStatusClass('NET_CONTENTS') || 'border-gray-300'"
+        />
+        <select
+          id="netContentsUnit"
+          formControlName="netContentsUnit"
+          data-cy="net-contents-unit-select"
+          class="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          @for (unit of volumeUnits; track unit) {
+            <option [value]="unit">{{ unit }}</option>
+          }
+        </select>
+      </div>
       @if (getFieldCheck('NET_CONTENTS') && getFieldCheck('NET_CONTENTS')!.status !== 'MATCH') {
         <p class="mt-1 text-sm" [ngClass]="{
           'text-error': getFieldCheck('NET_CONTENTS')!.status === 'MISMATCH',

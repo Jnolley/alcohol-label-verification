@@ -1,9 +1,12 @@
 import { ILabelVerifier } from '../interface/label-verifier.interface';
 import { FormData, VerificationResult, FieldCheck, FieldType, MatchStatus } from '../../../../common';
 import { ExtractedText } from '../../ocr';
+import { INormalizer } from '../../../utility/normalization';
 import config from '../../../../config';
+import * as fuzzball from 'fuzzball';
 
 export class LabelVerifier implements ILabelVerifier {
+  constructor(private readonly normalizer: INormalizer) {}
 
   verify(formData: FormData, extractedText: ExtractedText): VerificationResult {
     const fieldChecks: FieldCheck[] = [
@@ -12,8 +15,8 @@ export class LabelVerifier implements ILabelVerifier {
       this.verifyAlcoholContent(formData.alcoholContent, extractedText.normalized),
     ];
 
-    if (formData.netContents) {
-      fieldChecks.push(this.verifyNetContents(formData.netContents, extractedText.normalized));
+    if (formData.netContentsValue && formData.netContentsUnit) {
+      fieldChecks.push(this.verifyNetContents(formData.netContentsValue, formData.netContentsUnit, extractedText.normalized));
     }
 
     fieldChecks.push(this.verifyGovernmentWarning(extractedText.normalized));
@@ -31,6 +34,7 @@ export class LabelVerifier implements ILabelVerifier {
     const normalizedBrand = this.removePunctuation(brandName.toUpperCase().trim());
     const normalizedExtracted = this.removePunctuation(extractedText);
 
+    // Try exact match first
     if (normalizedExtracted.includes(normalizedBrand)) {
       return {
         fieldType: FieldType.BrandName,
@@ -41,18 +45,16 @@ export class LabelVerifier implements ILabelVerifier {
       };
     }
 
-    const brandWords = this.splitByWhitespace(normalizedBrand);
-    const foundWords = brandWords.filter(word =>
-      word.length > 2 && normalizedExtracted.includes(word)
-    );
+    // Use fuzzy matching with 90% threshold
+    const score = fuzzball.partial_ratio(normalizedBrand, normalizedExtracted);
 
-    if (foundWords.length >= brandWords.length * config.verification.brandNameMinWordMatch) {
+    if (score >= 90) {
       return {
         fieldType: FieldType.BrandName,
         status: MatchStatus.Match,
-        message: 'Brand name found on label',
+        message: `Brand name found on label (${score}% match)`,
         expected: brandName,
-        found: foundWords.join(' '),
+        found: brandName,
       };
     }
 
@@ -65,21 +67,30 @@ export class LabelVerifier implements ILabelVerifier {
   }
 
   private verifyProductType(productType: string, extractedText: string): FieldCheck {
-    const normalizedType = productType.toUpperCase().trim();
-    const keywords = this.splitByWhitespace(normalizedType);
+    const normalizedType = this.removePunctuation(productType.toUpperCase().trim());
+    const normalizedExtracted = this.removePunctuation(extractedText);
 
-    // Check if any significant keywords are present
-    const foundKeywords = keywords.filter(keyword =>
-      keyword.length > 2 && extractedText.includes(keyword)
-    );
-
-    if (foundKeywords.length >= config.verification.productTypeMinKeywordMatch) {
+    // Try exact match first
+    if (normalizedExtracted.includes(normalizedType)) {
       return {
         fieldType: FieldType.ProductType,
         status: MatchStatus.Match,
         message: 'Product type found on label',
         expected: productType,
-        found: foundKeywords.join(' '),
+        found: productType,
+      };
+    }
+
+    // Use fuzzy matching with 90% threshold
+    const score = fuzzball.partial_ratio(normalizedType, normalizedExtracted);
+
+    if (score >= 90) {
+      return {
+        fieldType: FieldType.ProductType,
+        status: MatchStatus.Match,
+        message: `Product type found on label (${score}% match)`,
+        expected: productType,
+        found: productType,
       };
     }
 
@@ -173,82 +184,44 @@ export class LabelVerifier implements ILabelVerifier {
     return char >= '0' && char <= '9';
   }
 
-  private verifyNetContents(netContents: string, extractedText: string): FieldCheck {
-    const normalizedExpected = this.removeWhitespace(netContents.toUpperCase());
-    const normalizedText = this.removeWhitespace(extractedText);
+  private verifyNetContents(value: number, unit: string, extractedText: string): FieldCheck {
+    // Convert user input to milliliters
+    const expectedMl = this.normalizer.convertToMilliliters(value, unit);
 
-    if (normalizedText.includes(normalizedExpected)) {
-      return {
-        fieldType: FieldType.NetContents,
-        status: MatchStatus.Match,
-        message: 'Net contents matches',
-        expected: netContents,
-        found: netContents,
-      };
-    }
+    // Try to extract volume from label using normalizer
+    const extractedMl = this.normalizer.normalizeVolume(extractedText);
 
-    // Extract numbers from expected value
-    const expectedNumbers = this.extractNumbers(netContents);
-
-    // Look for any of these numbers in the text
-    for (const num of expectedNumbers) {
-      if (extractedText.includes(num)) {
+    if (extractedMl !== null) {
+      // Exact match required - no tolerance
+      if (extractedMl === expectedMl) {
         return {
           fieldType: FieldType.NetContents,
           status: MatchStatus.Match,
-          message: 'Net contents found on label',
-          expected: netContents,
-          found: num,
+          message: 'Net contents matches',
+          expected: `${value} ${unit}`,
+          found: `${extractedMl} ml`,
         };
       }
+
+      return {
+        fieldType: FieldType.NetContents,
+        status: MatchStatus.Mismatch,
+        message: 'Net contents does not match label',
+        expected: `${value} ${unit} (${expectedMl} ml)`,
+        found: `${extractedMl} ml`,
+      };
     }
 
     return {
       fieldType: FieldType.NetContents,
       status: MatchStatus.NotFound,
       message: 'Net contents not found on label',
-      expected: netContents,
+      expected: `${value} ${unit}`,
     };
   }
 
-  private extractNumbers(text: string): string[] {
-    const numbers: string[] = [];
-    let currentNumber = '';
-
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      if (this.isDigit(char) || char === '.') {
-        currentNumber += char;
-      } else if (currentNumber) {
-        numbers.push(currentNumber);
-        currentNumber = '';
-      }
-    }
-
-    if (currentNumber) {
-      numbers.push(currentNumber);
-    }
-
-    return numbers;
-  }
-
-  private splitByWhitespace(text: string): string[] {
-    return text.split(' ').filter(word => word.length > 0);
-  }
-
-  private removeWhitespace(text: string): string {
-    return text.split(' ').join('');
-  }
-
   private removePunctuation(text: string): string {
-    let result = '';
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      if ((char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9') || char === ' ') {
-        result += char;
-      }
-    }
-    return result;
+    return text.replace(/[^A-Z0-9 ]/g, '');
   }
 
   private verifyGovernmentWarning(extractedText: string): FieldCheck {

@@ -17,7 +17,7 @@ export const config = {
    */
   ocr: {
     minConfidence: 30, // Minimum OCR confidence percentage (0-100)
-    minTextLength: 0, // Minimum number of characters to extract
+    minTextLength: 3, // Minimum number of characters to extract
     warningConfidenceThreshold: 60, // Log warning if confidence is below this
     language: 'eng', // Tesseract language model to use
   },
@@ -26,8 +26,8 @@ export const config = {
    * Verification Configuration
    */
   verification: {
-    alcoholContentTolerance: 0.0, // Allowed difference in ABV percentage
-    brandNameMinWordMatch: 0.99, // Minimum percentage of brand words that must match
+    alcoholContentTolerance: 0.0, // Allowed difference in ABV percentage (exact match)
+    brandNameMinWordMatch: 0.99, // Minimum percentage of brand words that must match (99%)
     productTypeMinKeywordMatch: 1, // Minimum number of product type keywords that must match
     governmentWarningMinSections: 7, // Number of required sections for government warning (7 = 100%)
   },

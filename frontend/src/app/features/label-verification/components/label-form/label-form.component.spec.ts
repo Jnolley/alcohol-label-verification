@@ -27,7 +27,8 @@ describe('LabelFormComponent', () => {
       expect(component.form.get('brandName')?.value).toBe('');
       expect(component.form.get('productType')?.value).toBe('');
       expect(component.form.get('alcoholContent')?.value).toBe('');
-      expect(component.form.get('netContents')?.value).toBe('');
+      expect(component.form.get('netContentsValue')?.value).toBe('');
+      expect(component.form.get('netContentsUnit')?.value).toBe('ml');
     });
 
     it('should have required validators on required fields', () => {
@@ -36,10 +37,10 @@ describe('LabelFormComponent', () => {
       expect(component.form.get('alcoholContent')?.hasError('required')).toBe(true);
     });
 
-    it('should not have required validator on netContents', () => {
-      const netContents = component.form.get('netContents');
-      netContents?.setValue('');
-      expect(netContents?.hasError('required')).toBe(false);
+    it('should not have required validator on netContentsValue', () => {
+      const netContentsValue = component.form.get('netContentsValue');
+      netContentsValue?.setValue('');
+      expect(netContentsValue?.hasError('required')).toBe(false);
     });
 
     it('should have min/max validators on alcoholContent', () => {
@@ -68,7 +69,8 @@ describe('LabelFormComponent', () => {
         brandName: 'Test Brand',
         productType: 'Bourbon',
         alcoholContent: 45,
-        netContents: '750mL'
+        netContentsValue: 750,
+        netContentsUnit: 'ml'
       });
 
       component.onSubmit();
@@ -77,7 +79,8 @@ describe('LabelFormComponent', () => {
       expect(emittedData.brandName).toBe('Test Brand');
       expect(emittedData.productType).toBe('Bourbon');
       expect(emittedData.alcoholContent).toBe(45);
-      expect(emittedData.netContents).toBe('750mL');
+      expect(emittedData.netContentsValue).toBe(750);
+      expect(emittedData.netContentsUnit).toBe('ml');
     });
 
     it('should not emit when form is invalid', () => {
@@ -115,7 +118,7 @@ describe('LabelFormComponent', () => {
       expect(emittedData.alcoholContent).toBe(45.5);
     });
 
-    it('should handle submission without optional netContents', () => {
+    it('should handle submission without optional netContentsValue', () => {
       let emittedData: any;
       component.formSubmit.subscribe(data => {
         emittedData = data;
@@ -125,13 +128,15 @@ describe('LabelFormComponent', () => {
         brandName: 'Test',
         productType: 'Bourbon',
         alcoholContent: 45,
-        netContents: ''
+        netContentsValue: '',
+        netContentsUnit: 'ml'
       });
 
       component.onSubmit();
 
       expect(emittedData).toBeDefined();
-      expect(emittedData.netContents).toBe('');
+      expect(emittedData.netContentsValue).toBeUndefined();
+      expect(emittedData.netContentsUnit).toBeUndefined();
     });
   });
 
@@ -267,8 +272,12 @@ describe('LabelFormComponent', () => {
       expect(component.alcoholContent).toBe(component.form.get('alcoholContent'));
     });
 
-    it('should provide access to netContents control', () => {
-      expect(component.netContents).toBe(component.form.get('netContents'));
+    it('should provide access to netContentsValue control', () => {
+      expect(component.netContentsValue).toBe(component.form.get('netContentsValue'));
+    });
+
+    it('should provide access to netContentsUnit control', () => {
+      expect(component.netContentsUnit).toBe(component.form.get('netContentsUnit'));
     });
   });
 });

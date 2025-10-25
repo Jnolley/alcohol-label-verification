@@ -31,8 +31,8 @@ graph TB
     end
 
     subgraph "Engine Layer"
-        Extract[ExtractText]
-        Verify[VerifyLabel]
+        Extract[ExtractText (OCR)]
+        Verify[VerifyLabel (Verification)]
     end
 
     subgraph "Utility Layer"
@@ -79,11 +79,15 @@ backend/
 │   │   │       └── tests/
 │   │   │
 │   │   ├── engine/
-│   │   │   └── ocr/
-│   │   │       ├── contracts/
+│   │   │   ├── ocr/
+│   │   │   │   ├── contracts/
+│   │   │   │   ├── interface/
+│   │   │   │   ├── implementation/
+│   │   │   │   └── tests/
+│   │   │   │
+│   │   │   └── verification/
 │   │   │       ├── interface/
 │   │   │       ├── implementation/
-│   │   │       ├── mappers/
 │   │   │       └── tests/
 │   │   │
 │   │   └── utility/
@@ -158,16 +162,18 @@ Orchestrate workflows across multiple services.
 ### Engine Layer
 Core business logic and processing.
 
-**ExtractText**
-- Extract text from images using OCR
+**ExtractText (OCR Service)**
+- Extract text from images using OCR (Tesseract.js)
 - Normalize and clean text
 - Return structured result with confidence score
+- Located in: `services/engine/ocr/`
 
-**VerifyLabel**
+**VerifyLabel (Verification Service)**
 - Compare form data with extracted text
 - Verify each field using matching rules
 - Return field-by-field comparison
 - Report all discrepancies
+- Located in: `services/engine/verification/`
 
 ### Utility Layer
 File processing and text normalization helpers.

@@ -8,8 +8,7 @@ import { VerificationResult } from '../../../../shared/models/verification-resul
   selector: 'app-label-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './label-form.component.html',
-  styleUrl: './label-form.component.css'
+  templateUrl: './label-form.component.html'
 })
 export class LabelFormComponent {
   formSubmit = output<LabelFormData>();
@@ -17,12 +16,15 @@ export class LabelFormComponent {
 
   form: FormGroup;
 
+  readonly volumeUnits = ['ml', 'cl', 'L', 'fl oz', 'gal'];
+
   constructor(private fb: FormBuilder) {
     this.form = this.fb.group({
       brandName: ['', [Validators.required]],
       productType: ['', [Validators.required]],
       alcoholContent: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
-      netContents: ['']
+      netContentsValue: [''],
+      netContentsUnit: ['ml']
     });
 
     // Emit form data whenever form changes and is valid
@@ -30,8 +32,11 @@ export class LabelFormComponent {
       if (this.form.valid) {
         const formValue = this.form.value;
         this.formSubmit.emit({
-          ...formValue,
-          alcoholContent: Number(formValue.alcoholContent)
+          brandName: formValue.brandName,
+          productType: formValue.productType,
+          alcoholContent: Number(formValue.alcoholContent),
+          netContentsValue: formValue.netContentsValue ? Number(formValue.netContentsValue) : undefined,
+          netContentsUnit: formValue.netContentsValue ? formValue.netContentsUnit : undefined
         } as LabelFormData);
       }
     });
@@ -41,8 +46,11 @@ export class LabelFormComponent {
     if (this.form.valid) {
       const formValue = this.form.value;
       this.formSubmit.emit({
-        ...formValue,
-        alcoholContent: Number(formValue.alcoholContent)
+        brandName: formValue.brandName,
+        productType: formValue.productType,
+        alcoholContent: Number(formValue.alcoholContent),
+        netContentsValue: formValue.netContentsValue ? Number(formValue.netContentsValue) : undefined,
+        netContentsUnit: formValue.netContentsValue ? formValue.netContentsUnit : undefined
       } as LabelFormData);
     }
   }
@@ -59,8 +67,12 @@ export class LabelFormComponent {
     return this.form.get('alcoholContent');
   }
 
-  get netContents() {
-    return this.form.get('netContents');
+  get netContentsValue() {
+    return this.form.get('netContentsValue');
+  }
+
+  get netContentsUnit() {
+    return this.form.get('netContentsUnit');
   }
 
   getFieldCheck(fieldType: string) {

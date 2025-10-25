@@ -193,8 +193,8 @@ describe('Normalizer', () => {
       });
 
       it('should return null for unsupported units', () => {
-        expect(normalizer.normalizeVolume('25.4 fl oz')).toBeNull();
-        expect(normalizer.normalizeVolume('1 gallon')).toBeNull();
+        expect(normalizer.normalizeVolume('25.4 pints')).toBeNull();
+        expect(normalizer.normalizeVolume('1 quart')).toBeNull();
       });
     });
 
