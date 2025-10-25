@@ -1,4 +1,4 @@
-<div class="space-y-4">
+<div class="space-y-4" data-cy="image-upload">
   <div>
     <label class="block text-sm font-medium text-gray-900 mb-1.5">
       Label Image <span class="text-error">*</span>
@@ -14,6 +14,7 @@
       (change)="onFileSelected($event)"
       class="hidden"
       id="file-upload"
+      data-cy="file-input"
     />
 
     @if (!selectedFile()) {
@@ -42,6 +43,7 @@
               [src]="previewUrl()"
               [alt]="selectedFile()!.name"
               class="max-w-full h-auto max-h-64 mx-auto border border-gray-200 rounded"
+              data-cy="image-preview"
             />
           </div>
         }
@@ -56,6 +58,7 @@
             type="button"
             (click)="clearSelection(); fileInput.value = ''"
             class="px-3 py-1.5 text-sm text-error border border-error rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-error"
+            data-cy="remove-image-button"
           >
             Remove
           </button>
@@ -64,7 +67,7 @@
     }
 
     @if (error()) {
-      <p class="mt-2 text-sm text-error">{{ error() }}</p>
+      <p class="mt-2 text-sm text-error" data-cy="upload-error">{{ error() }}</p>
     }
   </div>
 </div>
