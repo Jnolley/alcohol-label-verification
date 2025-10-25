@@ -87,8 +87,12 @@ backend/
 │   │   │       └── tests/
 │   │   │
 │   │   └── utility/
-│   │       └── image-processing/
-│   │           ├── contracts/
+│   │       ├── image-processing/
+│   │       │   ├── interface/
+│   │       │   ├── implementation/
+│   │       │   └── tests/
+│   │       │
+│   │       └── normalization/
 │   │           ├── interface/
 │   │           ├── implementation/
 │   │           └── tests/
@@ -166,12 +170,19 @@ Core business logic and processing.
 - Report all discrepancies
 
 ### Utility Layer
-File processing helpers.
+File processing and text normalization helpers.
 
 **ValidateImage**
 - Validate file size and type
-- Verify format (JPEG/PNG)
-- Check file integrity
+- Verify format (JPEG/PNG/WebP)
+- Check file integrity using magic bytes
+
+**Normalizer**
+- Extract and normalize ABV (Alcohol By Volume) from text
+- Extract and normalize volume/net contents from text
+- Convert volume units to milliliters
+- Parse percentage values without regex
+- Handle various text formats (e.g., "13.5%", "750ml", "1.5L")
 
 ---
 

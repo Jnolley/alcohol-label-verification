@@ -34,4 +34,4 @@ coverage/
 
 # Misc
 .tmp/
-temp/
+temp/backend/eng.traineddata
