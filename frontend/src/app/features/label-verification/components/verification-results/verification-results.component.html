@@ -1,0 +1,73 @@
+<div class="space-y-6">
+  <!-- Overall Status -->
+  <div class="p-4 border rounded" [ngClass]="{
+    'bg-green-50 border-success': result().success,
+    'bg-red-50 border-error': !result().success
+  }">
+    <div class="flex items-start gap-3">
+      <!-- Success Icon -->
+      @if (result().success) {
+        <svg class="status-icon-large text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="icons.checkCircle" />
+        </svg>
+      }
+      <!-- Error Icon -->
+      @if (!result().success) {
+        <svg class="status-icon-large text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="icons.xCircle" />
+        </svg>
+      }
+
+      <div>
+        <h2 class="text-lg font-semibold" [ngClass]="{
+          'text-success': result().success,
+          'text-error': !result().success
+        }">
+          {{ result().message }}
+        </h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Field Checks -->
+  <div>
+    <h3 class="text-sm font-medium text-gray-900 mb-3">Verification Details:</h3>
+    <div class="space-y-2">
+      @for (check of result().fieldChecks; track check.fieldType) {
+        <div class="status-box" [ngClass]="getStatusClass(check.status)">
+          <div class="flex items-start gap-2">
+            <!-- Status Icon -->
+            <svg class="status-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                [attr.d]="check.status === MatchStatus.Match ? icons.check :
+                          check.status === MatchStatus.Mismatch ? icons.x :
+                          icons.exclamationTriangle"
+              />
+            </svg>
+
+            <div class="flex-1">
+              <p class="text-sm font-medium">{{ getFieldLabel(check.fieldType) }}</p>
+              <p class="text-sm mt-0.5">{{ check.message }}</p>
+
+              <!-- Show expected vs found for mismatches -->
+              @if (check.status === MatchStatus.Mismatch && check.expected && check.found) {
+                <div class="mt-2 text-xs space-y-1">
+                  <p><span class="font-medium">Expected:</span> {{ check.expected }}</p>
+                  <p><span class="font-medium">Found:</span> {{ check.found }}</p>
+                </div>
+              }
+              @if (check.status === MatchStatus.NotFound && check.expected) {
+                <div class="mt-2 text-xs">
+                  <p><span class="font-medium">Expected:</span> {{ check.expected }}</p>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

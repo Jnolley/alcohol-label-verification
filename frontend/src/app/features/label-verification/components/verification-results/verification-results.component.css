@@ -1,0 +1,11 @@
+.status-icon {
+  @apply w-5 h-5 flex-shrink-0;
+}
+
+.status-icon-large {
+  @apply w-6 h-6 flex-shrink-0;
+}
+
+.status-box {
+  @apply p-3 border rounded;
+}
