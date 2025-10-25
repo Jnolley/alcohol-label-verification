@@ -35,7 +35,8 @@ describe('VerificationService', () => {
           brandName: 'Old Tom Distillery',
           productType: 'Bourbon',
           alcoholContent: 45,
-          netContents: '750 mL'
+          netContentsValue: 750,
+          netContentsUnit: 'ml'
         },
         imageFile: mockFile
       };
@@ -66,7 +67,8 @@ describe('VerificationService', () => {
       expect(formData.get('brandName')).toBe('Old Tom Distillery');
       expect(formData.get('productType')).toBe('Bourbon');
       expect(formData.get('alcoholContent')).toBe('45');
-      expect(formData.get('netContents')).toBe('750 mL');
+      expect(formData.get('netContentsValue')).toBe('750');
+      expect(formData.get('netContentsUnit')).toBe('ml');
 
       req.flush(mockResponse);
     });
@@ -87,7 +89,8 @@ describe('VerificationService', () => {
       const req = httpMock.expectOne('http://localhost:3000/api/verify');
       const formData = req.request.body as FormData;
 
-      expect(formData.has('netContents')).toBe(false);
+      expect(formData.has('netContentsValue')).toBe(false);
+      expect(formData.has('netContentsUnit')).toBe(false);
 
       req.flush({});
     });
