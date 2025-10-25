@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
 import { IVerificationManager } from '../../services/manager/label-verification';
-import { RequestMapper } from '../mappers/request.mapper';
-import { ResponseMapper } from '../mappers/response.mapper';
-import { BaseException } from '../../common';
+import createError from 'http-errors';
 
 export class VerificationController {
   constructor(private readonly verificationManager: IVerificationManager) {}
@@ -19,31 +17,32 @@ export class VerificationController {
         return;
       }
 
-      const requestData = {
+      const formData = {
         brandName: req.body.brandName,
         productType: req.body.productType,
-        alcoholContent: req.body.alcoholContent,
-        netContents: req.body.netContents,
-        image: req.file,
+        alcoholContent: parseFloat(req.body.alcoholContent),
+        netContentsValue: req.body.netContentsValue ? parseFloat(req.body.netContentsValue) : undefined,
+        netContentsUnit: req.body.netContentsUnit,
       };
 
-      const formData = RequestMapper.toFormData(requestData);
       const result = await this.verificationManager.processVerification(
         formData,
         req.file.buffer,
         req.file.originalname
       );
 
-      const response = ResponseMapper.toVerificationResponse(result);
-      res.status(200).json(response);
+      res.status(200).json({
+        success: result.success,
+        message: result.message,
+        fieldChecks: result.fieldChecks,
+      });
     } catch (error) {
-      const errorResponse = ResponseMapper.toErrorResponse(error as Error);
+      const errorResponse = createError.isHttpError(error)
+        ? { error: { code: error.name, message: error.message } }
+        : { error: { code: 'INTERNAL_SERVER_ERROR', message: 'An unexpected error occurred' } };
 
-      if (error instanceof BaseException) {
-        res.status(error.statusCode).json(errorResponse);
-      } else {
-        res.status(500).json(errorResponse);
-      }
+      const statusCode = createError.isHttpError(error) ? error.statusCode : 500;
+      res.status(statusCode).json(errorResponse);
     }
   }
 }

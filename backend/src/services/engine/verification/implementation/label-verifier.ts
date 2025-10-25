@@ -3,6 +3,7 @@ import { FormData, VerificationResult, FieldCheck, FieldType, MatchStatus } from
 import { ExtractedText } from '../../ocr';
 import { INormalizer } from '../../../utility/normalization';
 import config from '../../../../config';
+import * as fuzzball from 'fuzzball';
 
 export class LabelVerifier implements ILabelVerifier {
   constructor(private readonly normalizer: INormalizer) {}
@@ -33,16 +34,8 @@ export class LabelVerifier implements ILabelVerifier {
     const normalizedBrand = this.removePunctuation(brandName.toUpperCase().trim());
     const normalizedExtracted = this.removePunctuation(extractedText);
 
-    console.log('🔍 Brand Name Verification:');
-    console.log('  Input brand:', brandName);
-    console.log('  Normalized brand:', normalizedBrand);
-    console.log('  Extracted text length:', extractedText.length);
-    console.log('  Extracted text (first 200 chars):', extractedText.substring(0, 200));
-    console.log('  Normalized extracted (first 200 chars):', normalizedExtracted.substring(0, 200));
-
-    // Exact match required - no fuzzy logic
+    // Try exact match first
     if (normalizedExtracted.includes(normalizedBrand)) {
-      console.log('  ✓ Exact match found');
       return {
         fieldType: FieldType.BrandName,
         status: MatchStatus.Match,
@@ -52,7 +45,19 @@ export class LabelVerifier implements ILabelVerifier {
       };
     }
 
-    console.log('  ✗ No exact match');
+    // Use fuzzy matching with 90% threshold
+    const score = fuzzball.partial_ratio(normalizedBrand, normalizedExtracted);
+
+    if (score >= 90) {
+      return {
+        fieldType: FieldType.BrandName,
+        status: MatchStatus.Match,
+        message: `Brand name found on label (${score}% match)`,
+        expected: brandName,
+        found: brandName,
+      };
+    }
+
     return {
       fieldType: FieldType.BrandName,
       status: MatchStatus.NotFound,
@@ -65,13 +70,8 @@ export class LabelVerifier implements ILabelVerifier {
     const normalizedType = this.removePunctuation(productType.toUpperCase().trim());
     const normalizedExtracted = this.removePunctuation(extractedText);
 
-    console.log('🔍 Product Type Verification:');
-    console.log('  Input type:', productType);
-    console.log('  Normalized type:', normalizedType);
-
-    // Exact match required - no fuzzy logic
+    // Try exact match first
     if (normalizedExtracted.includes(normalizedType)) {
-      console.log('  ✓ Exact match found');
       return {
         fieldType: FieldType.ProductType,
         status: MatchStatus.Match,
@@ -81,7 +81,19 @@ export class LabelVerifier implements ILabelVerifier {
       };
     }
 
-    console.log('  ✗ No exact match');
+    // Use fuzzy matching with 90% threshold
+    const score = fuzzball.partial_ratio(normalizedType, normalizedExtracted);
+
+    if (score >= 90) {
+      return {
+        fieldType: FieldType.ProductType,
+        status: MatchStatus.Match,
+        message: `Product type found on label (${score}% match)`,
+        expected: productType,
+        found: productType,
+      };
+    }
+
     return {
       fieldType: FieldType.ProductType,
       status: MatchStatus.NotFound,
@@ -176,20 +188,12 @@ export class LabelVerifier implements ILabelVerifier {
     // Convert user input to milliliters
     const expectedMl = this.normalizer.convertToMilliliters(value, unit);
 
-    console.log('🔍 Net Contents Verification:');
-    console.log('  Input:', value, unit);
-    console.log('  Expected (ml):', expectedMl);
-    console.log('  Extracted text (first 200 chars):', extractedText.substring(0, 200));
-
     // Try to extract volume from label using normalizer
     const extractedMl = this.normalizer.normalizeVolume(extractedText);
 
     if (extractedMl !== null) {
-      console.log('  Found volume (ml):', extractedMl);
-
       // Exact match required - no tolerance
       if (extractedMl === expectedMl) {
-        console.log('  ✓ Exact match!');
         return {
           fieldType: FieldType.NetContents,
           status: MatchStatus.Match,
@@ -199,7 +203,6 @@ export class LabelVerifier implements ILabelVerifier {
         };
       }
 
-      console.log('  ✗ Volume mismatch - expected:', expectedMl, 'found:', extractedMl);
       return {
         fieldType: FieldType.NetContents,
         status: MatchStatus.Mismatch,
@@ -209,7 +212,6 @@ export class LabelVerifier implements ILabelVerifier {
       };
     }
 
-    console.log('  ✗ No volume found in extracted text');
     return {
       fieldType: FieldType.NetContents,
       status: MatchStatus.NotFound,
@@ -218,44 +220,8 @@ export class LabelVerifier implements ILabelVerifier {
     };
   }
 
-  private extractNumbers(text: string): string[] {
-    const numbers: string[] = [];
-    let currentNumber = '';
-
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      if (this.isDigit(char) || char === '.') {
-        currentNumber += char;
-      } else if (currentNumber) {
-        numbers.push(currentNumber);
-        currentNumber = '';
-      }
-    }
-
-    if (currentNumber) {
-      numbers.push(currentNumber);
-    }
-
-    return numbers;
-  }
-
-  private splitByWhitespace(text: string): string[] {
-    return text.split(' ').filter(word => word.length > 0);
-  }
-
-  private removeWhitespace(text: string): string {
-    return text.split(' ').join('');
-  }
-
   private removePunctuation(text: string): string {
-    let result = '';
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      if ((char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9') || char === ' ') {
-        result += char;
-      }
-    }
-    return result;
+    return text.replace(/[^A-Z0-9 ]/g, '');
   }
 
   private verifyGovernmentWarning(extractedText: string): FieldCheck {

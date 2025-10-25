@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { VerificationController } from './api/controllers/verification.controller';
 import { createVerificationRoutes } from './api/routes/verification.routes';
 import { VerificationManager } from './services/manager/label-verification';
@@ -14,19 +15,7 @@ export function createApp() {
   // Middleware
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-
-  // CORS
-  app.use((req, res, next) => {
-    const allowedOrigin = process.env.CORS_ORIGIN || '*';
-    res.header('Access-Control-Allow-Origin', allowedOrigin);
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    if (req.method === 'OPTIONS') {
-      res.sendStatus(200);
-    } else {
-      next();
-    }
-  });
+  app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 
   // Dependency injection
   const fieldValidator = new FieldValidator();

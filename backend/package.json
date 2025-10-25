@@ -16,12 +16,21 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "convert-units": "^2.3.4",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
+    "file-type": "^16.5.4",
+    "fuzzball": "^2.2.3",
+    "http-errors": "^2.0.0",
     "multer": "^2.0.2",
-    "tesseract.js": "^6.0.1"
+    "tesseract.js": "^6.0.1",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/convert-units": "^2.3.12",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.4",
+    "@types/http-errors": "^2.0.5",
     "@types/jest": "^30.0.0",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.9.1",

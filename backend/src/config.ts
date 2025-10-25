@@ -17,7 +17,7 @@ export const config = {
    */
   ocr: {
     minConfidence: 30, // Minimum OCR confidence percentage (0-100)
-    minTextLength: 0, // Minimum number of characters to extract
+    minTextLength: 3, // Minimum number of characters to extract
     warningConfidenceThreshold: 60, // Log warning if confidence is below this
     language: 'eng', // Tesseract language model to use
   },

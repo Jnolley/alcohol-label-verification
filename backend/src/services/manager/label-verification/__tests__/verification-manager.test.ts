@@ -9,11 +9,9 @@ import {
   FieldCheck,
   FieldType,
   MatchStatus,
-  FieldValidationException,
-  ImageValidationException,
-  OCRException,
 } from '../../../../common';
 import { ExtractedText } from '../../../engine/ocr';
+import createError from 'http-errors';
 
 describe('VerificationManager', () => {
   let manager: VerificationManager;
@@ -51,7 +49,8 @@ describe('VerificationManager', () => {
     brandName: 'Old Tom Distillery',
     productType: 'Kentucky Straight Bourbon Whiskey',
     alcoholContent: 45,
-    netContents: '750 mL',
+    netContentsValue: 750,
+    netContentsUnit: 'mL',
   });
 
   const createExtractedText = (): ExtractedText => ({
@@ -166,18 +165,18 @@ describe('VerificationManager', () => {
   });
 
   describe('error handling', () => {
-    it('should throw FieldValidationException when field validation fails', async () => {
+    it('should throw error when field validation fails', async () => {
       const formData = createFormData();
       const imageBuffer = Buffer.from('fake image data');
       const filename = 'test.jpg';
-      const error = new FieldValidationException('Brand name is required', 'brandName');
+      const error = createError(400, 'Brand name is required');
 
       mockFieldValidator.validate.mockImplementation(() => {
         throw error;
       });
 
       await expect(manager.processVerification(formData, imageBuffer, filename)).rejects.toThrow(
-        FieldValidationException
+        'Brand name is required'
       );
 
       // Should not call subsequent services
@@ -186,17 +185,17 @@ describe('VerificationManager', () => {
       expect(mockLabelVerifier.verify).not.toHaveBeenCalled();
     });
 
-    it('should throw ImageValidationException when image validation fails', async () => {
+    it('should throw error when image validation fails', async () => {
       const formData = createFormData();
       const imageBuffer = Buffer.from('fake image data');
       const filename = 'test.jpg';
-      const error = new ImageValidationException('Invalid image format');
+      const error = createError(422, 'Invalid image format');
 
       mockFieldValidator.validate.mockReturnValue(undefined);
       mockImageValidator.validate.mockRejectedValue(error);
 
       await expect(manager.processVerification(formData, imageBuffer, filename)).rejects.toThrow(
-        ImageValidationException
+        'Invalid image format'
       );
 
       // Field validator should be called
@@ -207,18 +206,18 @@ describe('VerificationManager', () => {
       expect(mockLabelVerifier.verify).not.toHaveBeenCalled();
     });
 
-    it('should throw OCRException when text extraction fails', async () => {
+    it('should throw error when text extraction fails', async () => {
       const formData = createFormData();
       const imageBuffer = Buffer.from('fake image data');
       const filename = 'test.jpg';
-      const error = new OCRException('No text could be extracted');
+      const error = createError(422, 'No text could be extracted');
 
       mockFieldValidator.validate.mockReturnValue(undefined);
       mockImageValidator.validate.mockResolvedValue(undefined);
       mockTextExtractor.extract.mockRejectedValue(error);
 
       await expect(manager.processVerification(formData, imageBuffer, filename)).rejects.toThrow(
-        OCRException
+        'No text could be extracted'
       );
 
       // Previous services should be called
@@ -380,11 +379,11 @@ describe('VerificationManager', () => {
 
       mockFieldValidator.validate.mockReturnValue(undefined);
       mockImageValidator.validate.mockRejectedValue(
-        new ImageValidationException('Image file is empty')
+        createError(422, 'Image file is empty')
       );
 
       await expect(manager.processVerification(formData, emptyBuffer, filename)).rejects.toThrow(
-        ImageValidationException
+        'Image file is empty'
       );
     });
 

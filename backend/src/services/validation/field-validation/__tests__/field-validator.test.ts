@@ -1,5 +1,6 @@
 import { FieldValidator } from '../implementation/field-validator';
-import { FormData, FieldValidationException } from '../../../../common';
+import { FormData } from '../../../../common';
+import createError from 'http-errors';
 
 describe('FieldValidator', () => {
   let validator: FieldValidator;
@@ -24,7 +25,8 @@ describe('FieldValidator', () => {
         brandName: 'Old Tom Distillery',
         productType: 'Bourbon',
         alcoholContent: 40,
-        netContents: '750 mL',
+        netContentsValue: 750,
+        netContentsUnit: 'ml',
       };
 
       expect(() => validator.validate(validData)).not.toThrow();
@@ -59,7 +61,7 @@ describe('FieldValidator', () => {
         alcoholContent: 45,
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Brand name is required');
     });
 
@@ -70,7 +72,7 @@ describe('FieldValidator', () => {
         alcoholContent: 45,
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Brand name is required');
     });
 
@@ -81,7 +83,7 @@ describe('FieldValidator', () => {
         alcoholContent: 45,
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Brand name cannot exceed 200 characters');
     });
 
@@ -114,7 +116,7 @@ describe('FieldValidator', () => {
         alcoholContent: 45,
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Product type is required');
     });
 
@@ -125,7 +127,7 @@ describe('FieldValidator', () => {
         alcoholContent: 45,
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Product type is required');
     });
 
@@ -136,7 +138,7 @@ describe('FieldValidator', () => {
         alcoholContent: 45,
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Product type cannot exceed 200 characters');
     });
 
@@ -158,7 +160,7 @@ describe('FieldValidator', () => {
         productType: 'Bourbon',
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Alcohol content is required');
     });
 
@@ -169,7 +171,7 @@ describe('FieldValidator', () => {
         alcoholContent: null,
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Alcohol content is required');
     });
 
@@ -180,7 +182,7 @@ describe('FieldValidator', () => {
         alcoholContent: 'forty-five',
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Alcohol content must be a valid number');
     });
 
@@ -191,7 +193,7 @@ describe('FieldValidator', () => {
         alcoholContent: NaN,
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Alcohol content must be a valid number');
     });
 
@@ -202,7 +204,7 @@ describe('FieldValidator', () => {
         alcoholContent: -1,
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Alcohol content must be between 0 and 100');
     });
 
@@ -213,7 +215,7 @@ describe('FieldValidator', () => {
         alcoholContent: 101,
       };
 
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
+      expect(() => validator.validate(invalidData)).toThrow(Error);
       expect(() => validator.validate(invalidData)).toThrow('Alcohol content must be between 0 and 100');
     });
 
@@ -249,73 +251,83 @@ describe('FieldValidator', () => {
       expect(() => validator.validate(validData)).not.toThrow();
     });
 
-    it('should pass validation when net contents is null', () => {
-      const validData: any = {
-        brandName: 'Old Tom',
-        productType: 'Bourbon',
-        alcoholContent: 45,
-        netContents: null,
-      };
-
-      expect(() => validator.validate(validData)).not.toThrow();
-    });
-
-    it('should throw error when net contents is empty string', () => {
-      const invalidData: FormData = {
-        brandName: 'Old Tom',
-        productType: 'Bourbon',
-        alcoholContent: 45,
-        netContents: '',
-      };
-
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
-      expect(() => validator.validate(invalidData)).toThrow('Net contents cannot be empty if provided');
-    });
-
-    it('should throw error when net contents is only whitespace', () => {
-      const invalidData: FormData = {
-        brandName: 'Old Tom',
-        productType: 'Bourbon',
-        alcoholContent: 45,
-        netContents: '   ',
-      };
-
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
-      expect(() => validator.validate(invalidData)).toThrow('Net contents cannot be empty if provided');
-    });
-
-    it('should throw error when net contents exceeds 100 characters', () => {
-      const invalidData: FormData = {
-        brandName: 'Old Tom',
-        productType: 'Bourbon',
-        alcoholContent: 45,
-        netContents: 'A'.repeat(101),
-      };
-
-      expect(() => validator.validate(invalidData)).toThrow(FieldValidationException);
-      expect(() => validator.validate(invalidData)).toThrow('Net contents cannot exceed 100 characters');
-    });
-
-    it('should pass validation for net contents with exactly 100 characters', () => {
+    it('should pass validation when net contents is not provided', () => {
       const validData: FormData = {
         brandName: 'Old Tom',
         productType: 'Bourbon',
         alcoholContent: 45,
-        netContents: 'A'.repeat(100),
       };
 
       expect(() => validator.validate(validData)).not.toThrow();
     });
 
-    it('should pass validation for various net contents formats', () => {
-      const formats = ['750 mL', '750mL', '1L', '1.5L', '25.4 fl oz', '750ML'];
+    it('should throw error when net contents value is provided without unit', () => {
+      const invalidData: any = {
+        brandName: 'Old Tom',
+        productType: 'Bourbon',
+        alcoholContent: 45,
+        netContentsValue: 750,
+      };
 
-      formats.forEach((netContents) => {
-        const validData: FormData = {
+      expect(() => validator.validate(invalidData)).toThrow(Error);
+      expect(() => validator.validate(invalidData)).toThrow('Net contents unit is required when value is provided');
+    });
+
+    it('should throw error when net contents unit is provided without value', () => {
+      const invalidData: any = {
+        brandName: 'Old Tom',
+        productType: 'Bourbon',
+        alcoholContent: 45,
+        netContentsUnit: 'ml',
+      };
+
+      expect(() => validator.validate(invalidData)).toThrow(Error);
+      expect(() => validator.validate(invalidData)).toThrow('Net contents value is required when unit is provided');
+    });
+
+    it('should throw error when net contents value is zero or negative', () => {
+      const invalidData: any = {
+        brandName: 'Old Tom',
+        productType: 'Bourbon',
+        alcoholContent: 45,
+        netContentsValue: 0,
+        netContentsUnit: 'ml',
+      };
+
+      expect(() => validator.validate(invalidData)).toThrow(Error);
+      expect(() => validator.validate(invalidData)).toThrow('Net contents value must be greater than 0');
+    });
+
+    it('should throw error for invalid net contents unit', () => {
+      const invalidData: any = {
+        brandName: 'Old Tom',
+        productType: 'Bourbon',
+        alcoholContent: 45,
+        netContentsValue: 750,
+        netContentsUnit: 'invalid',
+      };
+
+      expect(() => validator.validate(invalidData)).toThrow(Error);
+      expect(() => validator.validate(invalidData)).toThrow('Net contents unit must be one of:');
+    });
+
+    it('should pass validation for various net contents units', () => {
+      const formats = [
+        { value: 750, unit: 'ml' },
+        { value: 75, unit: 'cl' },
+        { value: 1, unit: 'L' },
+        { value: 1.5, unit: 'L' },
+        { value: 25.4, unit: 'fl oz' },
+        { value: 1, unit: 'gal' },
+      ];
+
+      formats.forEach(({ value, unit }) => {
+        const validData: any = {
           brandName: 'Old Tom',
           productType: 'Bourbon',
           alcoholContent: 45,
-          netContents,
+          netContentsValue: value,
+          netContentsUnit: unit,
         };
 
         expect(() => validator.validate(validData)).not.toThrow();
@@ -329,7 +341,8 @@ describe('FieldValidator', () => {
         brandName: 'A'.repeat(200),
         productType: 'B'.repeat(200),
         alcoholContent: 100,
-        netContents: 'C'.repeat(100),
+        netContentsValue: 999999,
+        netContentsUnit: 'L',
       };
 
       expect(() => validator.validate(validData)).not.toThrow();
