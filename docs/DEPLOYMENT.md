@@ -107,27 +107,69 @@ Production deployment steps:
 
 ## Environment Variables
 
-### QA Environment
-- `NODE_ENV=staging`
-- Backend: `QA_API_URL`
-- Frontend: `QA_FRONTEND_URL`
+Environment variables are configured in the Vercel dashboard for each project.
 
-### Production Environment
+### QA Environment (Vercel Preview)
+- `NODE_ENV=staging`
+- `VERCEL_ENV=preview`
+- Backend: Set in Vercel backend project
+- Frontend: Set in Vercel frontend project
+
+### Production Environment (Vercel Production)
 - `NODE_ENV=production`
-- Backend: `PROD_API_URL`
-- Frontend: `PROD_FRONTEND_URL`
+- `VERCEL_ENV=production`
+- Backend: Set in Vercel backend project
+- Frontend: Set in Vercel frontend project
+
+### Required Variables
+
+**Backend:**
+- `PORT` - Server port (default: 3000)
+- `CORS_ORIGIN` - Frontend URL for CORS
+- `NODE_ENV` - Environment name
+
+**Frontend:**
+- `NODE_ENV` - Environment name
+- (API URL is configured in environment files)
+
+See `.env.example` for reference.
 
 ## CI/CD Configuration
 
+### Vercel Deployment (Current)
+
+This project uses Vercel for hosting and deployment.
+
+**QA Deployment** (Automatic)
+- Trigger: Merge to `develop` branch
+- Environment: Preview (QA)
+- URL: Auto-generated Vercel preview URL
+- Process: Automatic via Vercel Git integration
+
+**Production Deployment** (Manual)
+- Trigger: Manual deployment from `main` branch
+- Environment: Production
+- URL: Custom domain or vercel.app production URL
+- Process: Manual trigger via Vercel dashboard or CLI
+
+For detailed setup instructions, see **[VERCEL_SETUP.md](./VERCEL_SETUP.md)**
+
 ### GitHub Actions Workflows
 
-**`.github/workflows/qa-deploy.yml`** (Future)
-- Trigger: Push to `develop`
-- Jobs: test → build → deploy-qa
+**`.github/workflows/pr-checks.yml`** (Current)
+- Trigger: Pull requests to `main` or `develop`
+- Jobs: backend-checks → frontend-checks
+- Purpose: Run tests before allowing merge
 
-**`.github/workflows/prod-deploy.yml`** (Future)
+**`.github/workflows/qa-deploy.yml`** (Future - Optional)
+- Trigger: Push to `develop`
+- Jobs: test → build → notify
+- Note: Vercel handles actual deployment
+
+**`.github/workflows/prod-deploy.yml`** (Future - Optional)
 - Trigger: Manual workflow dispatch from `main`
-- Jobs: test → build → deploy-prod
+- Jobs: test → build → notify
+- Note: Vercel handles actual deployment
 
 ## Rollback Strategy
 
