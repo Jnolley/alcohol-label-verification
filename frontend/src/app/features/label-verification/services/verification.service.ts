@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { VerificationRequest } from '../../../shared/models/verification-request.model';
 import { VerificationResult } from '../../../shared/models/verification-result.model';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class VerificationService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = environment.apiUrl;
 
   verifyLabel(request: VerificationRequest): Observable<VerificationResult> {
     const formData = new FormData();
