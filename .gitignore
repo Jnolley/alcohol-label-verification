@@ -34,4 +34,8 @@ coverage/
 
 # Misc
 .tmp/
-temp/backend/eng.traineddata
+temp/
+# Test images in root (use test_images/ folder instead)
+/*.webp
+/*.jpg
+/*.avif
