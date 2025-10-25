@@ -8,12 +8,38 @@
 
     <!-- Form and Upload Section -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <!-- Error Banner -->
+      @if (store.verifyLabelError()) {
+        <div class="mb-6 p-4 bg-red-50 border border-error rounded">
+          <div class="flex items-start gap-3">
+            <svg class="w-6 h-6 text-error flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div class="flex-1">
+              <p class="text-error font-medium">{{ store.verifyLabelError() }}</p>
+            </div>
+            <button
+              type="button"
+              (click)="onReset()"
+              class="px-4 py-2 bg-gray-600 text-white rounded font-medium hover:bg-gray-700 text-sm"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      }
+
       <h2 class="text-xl font-semibold text-gray-900 mb-6">Product Information</h2>
 
-      <app-label-form (formSubmit)="onFormDataChange($event)" />
+      <app-label-form
+        (formSubmit)="onFormDataChange($event)"
+        [verificationResult]="store.verificationResult()"
+      />
 
       <div class="mt-8">
-        <app-image-upload (fileSelected)="onImageSelected($event)" />
+        <app-image-upload
+          (fileSelected)="onImageSelected($event)"
+        />
       </div>
 
       <!-- Submit Button -->
@@ -30,34 +56,15 @@
             Verify Label
           }
         </button>
-
-        @if (store.verificationResult() || store.verifyLabelError()) {
-          <button
-            type="button"
-            (click)="onReset()"
-            class="px-6 py-2.5 bg-gray-600 text-white rounded font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-offset-2"
-          >
-            Reset
-          </button>
-        }
       </div>
     </div>
 
-    <!-- Results Section -->
-    @if (store.verificationResult()) {
-      <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">Verification Results</h2>
-        <app-verification-results [result]="store.verificationResult()!" />
-      </div>
-    }
-
-    <!-- Error Section -->
-    @if (store.verifyLabelError()) {
-      <div class="bg-white rounded-lg shadow p-6">
-        <div class="p-4 bg-red-50 border border-error rounded">
-          <p class="text-error font-medium">{{ store.verifyLabelError() }}</p>
-        </div>
-      </div>
+    <!-- Verification Results Modal -->
+    @if (showModal && store.verificationResult()) {
+      <app-verification-modal
+        [result]="store.verificationResult()!"
+        (close)="onCloseModal()"
+      />
     }
   </div>
 </div>
