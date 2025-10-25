@@ -1,15 +1,15 @@
 import { IImageValidator } from '../interface/image-validator.interface';
 import { ImageValidationException } from '../../../../common/exceptions';
+import config from '../../../../config';
 
 export class ImageValidator implements IImageValidator {
-  private readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-  private readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-
   async validate(buffer: Buffer, filename: string): Promise<void> {
+    const maxFileSizeBytes = config.image.maxFileSizeMB * 1024 * 1024;
+
     // Check file size
-    if (buffer.length > this.MAX_FILE_SIZE) {
+    if (buffer.length > maxFileSizeBytes) {
       throw new ImageValidationException(
-        `File size exceeds maximum allowed size of ${this.MAX_FILE_SIZE / 1024 / 1024}MB`
+        `File size exceeds maximum allowed size of ${config.image.maxFileSizeMB}MB`
       );
     }
 

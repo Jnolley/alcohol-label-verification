@@ -3,4 +3,5 @@ export enum FieldType {
   ProductType = 'PRODUCT_TYPE',
   AlcoholContent = 'ALCOHOL_CONTENT',
   NetContents = 'NET_CONTENTS',
+  GovernmentWarning = 'GOVERNMENT_WARNING',
 }
