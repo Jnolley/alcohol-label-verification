@@ -9,7 +9,8 @@ describe('Image Upload', () => {
   });
 
   it('should show upload instructions', () => {
-    cy.contains('Upload Label Image').should('be.visible');
+    cy.contains('Label Image').should('be.visible');
+    cy.contains('Click to upload').should('be.visible');
   });
 
   it('should accept valid image formats', () => {
