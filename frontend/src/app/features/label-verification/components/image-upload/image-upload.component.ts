@@ -26,34 +26,28 @@ export class ImageUploadComponent {
       return;
     }
 
-    // Validate file type
     if (!this.ALLOWED_TYPES.includes(file.type)) {
       this.error.set('Please select a valid image file (JPEG, PNG, or WebP)');
       this.clearSelection();
       return;
     }
 
-    // Validate file size
     if (file.size > this.MAX_FILE_SIZE) {
       this.error.set('File size must be less than 10MB');
       this.clearSelection();
       return;
     }
 
-    // Clear any previous errors
     this.error.set(null);
 
-    // Set selected file
     this.selectedFile.set(file);
 
-    // Create preview URL
     const reader = new FileReader();
     reader.onload = (e) => {
       this.previewUrl.set(e.target?.result as string);
     };
     reader.readAsDataURL(file);
 
-    // Emit file to parent
     this.fileSelected.emit(file);
   }
 

@@ -3,45 +3,6 @@ import convert from 'convert-units';
 
 export class Normalizer implements INormalizer {
   /**
-   * Normalizes ABV (Alcohol By Volume) from text
-   * Extracts percentage values from formats like: "13.5%", "13.5 %", "13.5% ABV", etc.
-   * @param text The text to extract ABV from
-   * @returns The normalized ABV as a number, or null if not found
-   */
-  normalizeAbv(text: string): number | null {
-    if (!text) return null;
-
-    const normalized = text.toUpperCase().trim();
-    const percentIndex = normalized.indexOf('%');
-
-    if (percentIndex === -1) return null;
-
-    // Look backwards from % to find the number
-    let numberStr = '';
-    let i = percentIndex - 1;
-
-    // Skip whitespace before %
-    while (i >= 0 && normalized[i] === ' ') {
-      i--;
-    }
-
-    // Extract the number (including decimal point)
-    while (i >= 0 && (this.isDigit(normalized[i]) || normalized[i] === '.')) {
-      numberStr = normalized[i] + numberStr;
-      i--;
-    }
-
-    if (numberStr) {
-      const value = parseFloat(numberStr);
-      if (!isNaN(value) && value >= 0 && value <= 100) {
-        return value;
-      }
-    }
-
-    return null;
-  }
-
-  /**
    * Normalizes volume from text
    * Extracts volume values and converts to milliliters (ml)
    * Handles formats like: "750ml", "750 ml", "750mL", "1.5L", "1.5 L", "12 fl oz", "12 FL. OZ.", etc.
@@ -183,12 +144,10 @@ export class Normalizer implements INormalizer {
     let numberStr = '';
     let i = unitIndex - 1;
 
-    // Skip whitespace before unit
     while (i >= 0 && text[i] === ' ') {
       i--;
     }
 
-    // Extract the number (including decimal point)
     while (i >= 0 && (this.isDigit(text[i]) || text[i] === '.')) {
       numberStr = text[i] + numberStr;
       i--;

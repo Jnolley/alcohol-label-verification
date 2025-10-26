@@ -7,17 +7,14 @@ export class ImageValidator implements IImageValidator {
   async validate(buffer: Buffer, filename: string): Promise<void> {
     const maxFileSizeBytes = config.image.maxFileSizeMB * 1024 * 1024;
 
-    // Check file size
     if (buffer.length > maxFileSizeBytes) {
       throw createError(422, `File size exceeds maximum allowed size of ${config.image.maxFileSizeMB}MB`);
     }
 
-    // Check if buffer is empty
     if (buffer.length === 0) {
       throw createError(422, 'Image file is empty');
     }
 
-    // Use file-type package for robust file type detection
     const fileType = await fileTypeFromBuffer(buffer);
 
     if (!fileType) {

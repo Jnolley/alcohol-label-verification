@@ -7,112 +7,6 @@ describe('Normalizer', () => {
     normalizer = new Normalizer();
   });
 
-  describe('normalizeAbv', () => {
-    describe('valid formats', () => {
-      it('should extract ABV from simple percentage', () => {
-        expect(normalizer.normalizeAbv('45%')).toBe(45);
-        expect(normalizer.normalizeAbv('13.5%')).toBe(13.5);
-        expect(normalizer.normalizeAbv('40.0%')).toBe(40.0);
-      });
-
-      it('should extract ABV with space before percentage', () => {
-        expect(normalizer.normalizeAbv('45 %')).toBe(45);
-        expect(normalizer.normalizeAbv('13.5 %')).toBe(13.5);
-      });
-
-      it('should extract ABV with ABV suffix', () => {
-        expect(normalizer.normalizeAbv('45% ABV')).toBe(45);
-        expect(normalizer.normalizeAbv('13.5% ABV')).toBe(13.5);
-      });
-
-      it('should extract ABV with Alc/Vol suffix', () => {
-        expect(normalizer.normalizeAbv('45% Alc/Vol')).toBe(45);
-        expect(normalizer.normalizeAbv('40.0% ALC/VOL')).toBe(40.0);
-      });
-
-      it('should extract ABV from case-insensitive text', () => {
-        expect(normalizer.normalizeAbv('45% abv')).toBe(45);
-        expect(normalizer.normalizeAbv('45% ABV')).toBe(45);
-        expect(normalizer.normalizeAbv('45% Abv')).toBe(45);
-      });
-
-      it('should extract ABV from text with multiple spaces', () => {
-        expect(normalizer.normalizeAbv('45  %')).toBe(45);
-        expect(normalizer.normalizeAbv('13.5   %')).toBe(13.5);
-      });
-
-      it('should handle zero ABV', () => {
-        expect(normalizer.normalizeAbv('0%')).toBe(0);
-        expect(normalizer.normalizeAbv('0.0%')).toBe(0.0);
-      });
-
-      it('should handle 100% ABV', () => {
-        expect(normalizer.normalizeAbv('100%')).toBe(100);
-        expect(normalizer.normalizeAbv('100.0%')).toBe(100.0);
-      });
-
-      it('should handle decimal values', () => {
-        expect(normalizer.normalizeAbv('4.5%')).toBe(4.5);
-        expect(normalizer.normalizeAbv('45.75%')).toBe(45.75);
-        expect(normalizer.normalizeAbv('0.5%')).toBe(0.5);
-      });
-
-      it('should extract first percentage value from text with multiple percentages', () => {
-        expect(normalizer.normalizeAbv('ABV 45% - Contains 10% sugar')).toBe(45);
-      });
-    });
-
-    describe('invalid formats', () => {
-      it('should return null for text without percentage', () => {
-        expect(normalizer.normalizeAbv('45 ABV')).toBeNull();
-        expect(normalizer.normalizeAbv('forty-five')).toBeNull();
-        expect(normalizer.normalizeAbv('No alcohol')).toBeNull();
-      });
-
-      it('should return null for empty or null text', () => {
-        expect(normalizer.normalizeAbv('')).toBeNull();
-        expect(normalizer.normalizeAbv(null as any)).toBeNull();
-        expect(normalizer.normalizeAbv(undefined as any)).toBeNull();
-      });
-
-      it('should return null for percentage without number', () => {
-        expect(normalizer.normalizeAbv('%')).toBeNull();
-        expect(normalizer.normalizeAbv('ABV %')).toBeNull();
-      });
-
-      it('should return null for invalid percentage values', () => {
-        // Note: normalizer extracts values but doesn't validate ranges
-        // Validation is done in the validation layer
-        expect(normalizer.normalizeAbv('abc%')).toBeNull(); // non-numeric
-      });
-
-      it('should handle percentage with unusual formatting', () => {
-        // parseFloat handles double decimals by taking the first valid number
-        expect(normalizer.normalizeAbv('45..5%')).toBe(45);
-      });
-    });
-
-    describe('edge cases', () => {
-      it('should handle text with percentage at the beginning', () => {
-        expect(normalizer.normalizeAbv('45% is the alcohol content')).toBe(45);
-      });
-
-      it('should handle text with percentage at the end', () => {
-        expect(normalizer.normalizeAbv('Alcohol content is 45%')).toBe(45);
-      });
-
-      it('should handle very small decimal values', () => {
-        expect(normalizer.normalizeAbv('0.1%')).toBe(0.1);
-        expect(normalizer.normalizeAbv('0.01%')).toBe(0.01);
-      });
-
-      it('should handle values close to boundaries', () => {
-        expect(normalizer.normalizeAbv('99.9%')).toBe(99.9);
-        expect(normalizer.normalizeAbv('0.1%')).toBe(0.1);
-      });
-    });
-  });
-
   describe('normalizeVolume', () => {
     describe('milliliters (ml)', () => {
       it('should extract volume in ml', () => {
@@ -244,20 +138,6 @@ describe('Normalizer', () => {
       it('should maintain decimal precision for liter conversions', () => {
         expect(normalizer.normalizeVolume('0.4735L')).toBe(473.5);
       });
-    });
-  });
-
-  describe('combined scenarios', () => {
-    it('should handle text with both ABV and volume', () => {
-      const text = '750ml, 45% ABV';
-      expect(normalizer.normalizeVolume(text)).toBe(750);
-      expect(normalizer.normalizeAbv(text)).toBe(45);
-    });
-
-    it('should handle complex product descriptions', () => {
-      const text = 'Kentucky Straight Bourbon Whiskey - 750ML - 45% ALC/VOL';
-      expect(normalizer.normalizeVolume(text)).toBe(750);
-      expect(normalizer.normalizeAbv(text)).toBe(45);
     });
   });
 });

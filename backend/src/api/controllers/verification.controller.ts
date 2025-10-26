@@ -1,9 +1,14 @@
 import { Request, Response } from 'express';
-import { IVerificationManager } from '../../services/manager/label-verification';
+import { IVerificationManager } from '../../services/manager/label-verification/interface/verification-manager.interface';
+import { VerificationManager } from '../../services/manager/label-verification/implementation/verification-manager';
+import { SubmissionStore } from '../../storage/implementation/submission.store';
 import createError from 'http-errors';
 
 export class VerificationController {
-  constructor(private readonly verificationManager: IVerificationManager) {}
+  constructor(
+    private readonly verificationManager: IVerificationManager,
+    private readonly submissionStore?: SubmissionStore
+  ) {}
 
   async verifyLabel(req: Request, res: Response): Promise<void> {
     try {
@@ -25,17 +30,47 @@ export class VerificationController {
         netContentsUnit: req.body.netContentsUnit,
       };
 
-      const result = await this.verificationManager.processVerification(
-        formData,
-        req.file.buffer,
-        req.file.originalname
-      );
+      if (this.submissionStore && this.verificationManager instanceof VerificationManager) {
+        const { result, ocrData } = await this.verificationManager.processVerificationExtended(
+          formData,
+          req.file.buffer,
+          req.file.originalname
+        );
 
-      res.status(200).json({
-        success: result.success,
-        message: result.message,
-        fieldChecks: result.fieldChecks,
-      });
+        // Use preprocessed image so admin sees exactly what OCR processed
+        const imageBuffer = ocrData.processedImageBuffer || req.file.buffer;
+        const imageBase64 = imageBuffer.toString('base64');
+        this.submissionStore.add(formData, imageBase64, ocrData, result);
+
+        if (!result.success) {
+          res.status(200).json({
+            success: false,
+            underReview: true,
+            message: 'Your submission is under review by an administrator. We will verify the label manually and contact you with the results.',
+            fieldChecks: result.fieldChecks,
+          });
+          return;
+        }
+
+        res.status(200).json({
+          success: result.success,
+          underReview: false,
+          message: result.message,
+          fieldChecks: result.fieldChecks,
+        });
+      } else {
+        const result = await this.verificationManager.processVerification(
+          formData,
+          req.file.buffer,
+          req.file.originalname
+        );
+
+        res.status(200).json({
+          success: result.success,
+          message: result.message,
+          fieldChecks: result.fieldChecks,
+        });
+      }
     } catch (error) {
       const errorResponse = createError.isHttpError(error)
         ? { error: { code: error.name, message: error.message } }

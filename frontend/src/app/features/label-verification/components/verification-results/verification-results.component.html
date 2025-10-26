@@ -2,16 +2,24 @@
   <!-- Overall Status -->
   <div class="p-4 border rounded" [ngClass]="{
     'bg-green-50 border-success': result().success,
-    'bg-red-50 border-error': !result().success
+    'bg-yellow-50 border-yellow-500': !result().success && result().underReview,
+    'bg-red-50 border-error': !result().success && !result().underReview
   }">
     <div class="flex items-start gap-3">
+      <!-- Success Icon -->
       @if (result().success) {
         <svg class="status-icon-large text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="icons.checkCircle" />
         </svg>
       }
+      <!-- Under Review Icon (Warning) -->
+      @if (!result().success && result().underReview) {
+        <svg class="status-icon-large text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="icons.exclamationTriangle" />
+        </svg>
+      }
       <!-- Error Icon -->
-      @if (!result().success) {
+      @if (!result().success && !result().underReview) {
         <svg class="status-icon-large text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="icons.xCircle" />
         </svg>
@@ -20,10 +28,16 @@
       <div>
         <h2 class="text-lg font-semibold" [ngClass]="{
           'text-success': result().success,
-          'text-error': !result().success
+          'text-yellow-700': !result().success && result().underReview,
+          'text-error': !result().success && !result().underReview
         }">
           {{ result().message }}
         </h2>
+        @if (!result().success && result().underReview) {
+          <p class="text-sm text-yellow-700 mt-2">
+            An administrator will manually review your submission and verify the label. This helps us improve our automated system.
+          </p>
+        }
       </div>
     </div>
   </div>

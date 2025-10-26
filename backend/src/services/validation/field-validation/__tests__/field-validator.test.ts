@@ -1,5 +1,5 @@
 import { FieldValidator } from '../implementation/field-validator';
-import { FormData } from '../../../../common';
+import { FormData } from '../../../../common/contracts/form-data';
 import createError from 'http-errors';
 
 describe('FieldValidator', () => {

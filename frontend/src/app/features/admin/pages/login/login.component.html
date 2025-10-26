@@ -1,0 +1,68 @@
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+  <div class="max-w-md w-full">
+    <div class="bg-white rounded-lg shadow-md p-8">
+      <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-gray-900">Admin Login</h1>
+        <p class="mt-2 text-sm text-gray-600">TTB Label Verification System</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <!-- Username -->
+        <div>
+          <label for="username" class="block text-sm font-medium text-gray-900 mb-1.5">
+            Username <span class="text-error">*</span>
+          </label>
+          <input
+            id="username"
+            type="text"
+            formControlName="username"
+            placeholder="Enter admin username"
+            class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+            [ngClass]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched ? 'border-error' : 'border-gray-300'"
+          />
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-900 mb-1.5">
+            Password <span class="text-error">*</span>
+          </label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            placeholder="Enter admin password"
+            class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+            [ngClass]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched ? 'border-error' : 'border-gray-300'"
+          />
+        </div>
+
+        <!-- Error Message -->
+        @if (error()) {
+          <div class="p-3 bg-red-50 border border-error rounded">
+            <p class="text-sm text-error">{{ error() }}</p>
+          </div>
+        }
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          [disabled]="loginForm.invalid || loading()"
+          class="w-full bg-primary text-white py-2.5 px-4 rounded font-medium hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          @if (loading()) {
+            <span>Logging in...</span>
+          } @else {
+            <span>Login</span>
+          }
+        </button>
+      </form>
+
+      <div class="mt-6 text-center">
+        <a routerLink="/" class="text-sm text-primary hover:underline">
+          ← Back to Label Verification
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

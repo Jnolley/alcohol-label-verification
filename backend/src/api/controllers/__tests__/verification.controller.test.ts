@@ -1,7 +1,10 @@
 import { Request, Response } from 'express';
 import { VerificationController } from '../verification.controller';
-import { IVerificationManager } from '../../../services/manager/label-verification';
-import { VerificationResult, FieldCheck, FieldType, MatchStatus } from '../../../common';
+import { IVerificationManager } from '../../../services/manager/label-verification/interface/verification-manager.interface';
+import { VerificationResult } from '../../../common/contracts/verification-result';
+import { FieldCheck } from '../../../common/contracts/field-check';
+import { FieldType } from '../../../common/enums/field-type';
+import { MatchStatus } from '../../../common/enums/match-status';
 import createError from 'http-errors';
 
 describe('VerificationController', () => {
