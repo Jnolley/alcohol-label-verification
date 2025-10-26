@@ -1,7 +1,9 @@
 import { LabelVerifier } from '../implementation/label-verifier';
-import { FormData, FieldType, MatchStatus } from '../../../../common';
-import { ExtractedText } from '../../ocr';
-import { INormalizer } from '../../../utility/normalization';
+import { FormData } from '../../../../common/contracts/form-data';
+import { FieldType } from '../../../../common/enums/field-type';
+import { MatchStatus } from '../../../../common/enums/match-status';
+import { ExtractedText } from '../../ocr/contracts/extracted-text';
+import { INormalizer } from '../../../utility/normalization/interface/normalizer.interface';
 
 describe('LabelVerifier', () => {
   let verifier: LabelVerifier;
@@ -9,7 +11,6 @@ describe('LabelVerifier', () => {
 
   beforeEach(() => {
     mockNormalizer = {
-      normalizeAbv: jest.fn(),
       normalizeVolume: jest.fn((text: string) => {
         // Simple string-based extraction matching real normalizer behavior
         const upper = text.toUpperCase();
@@ -33,6 +34,7 @@ describe('LabelVerifier', () => {
     raw: text,
     normalized: text.toUpperCase(),
     confidence,
+    words: [],
   });
 
   describe('verify', () => {

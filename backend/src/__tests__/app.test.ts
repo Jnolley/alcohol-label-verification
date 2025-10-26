@@ -21,7 +21,9 @@ describe('App', () => {
     });
 
     it('should have CORS middleware', async () => {
-      const response = await request(app).get('/health');
+      const response = await request(app)
+        .get('/health')
+        .set('Origin', 'http://localhost:4200');
 
       expect(response.headers['access-control-allow-origin']).toBeDefined();
     });

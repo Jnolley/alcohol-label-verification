@@ -3,10 +3,8 @@ import { RouterOutlet } from '@angular/router';
 import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 
 @Component({
-    selector: 'app-root',
-    imports: [RouterOutlet, ToastContainerComponent],
-    templateUrl: './app.component.html'
+  selector: 'app-root',
+  imports: [RouterOutlet, ToastContainerComponent],
+  templateUrl: './app.component.html'
 })
-export class AppComponent {
-  title = 'frontend';
-}
+export class AppComponent {}

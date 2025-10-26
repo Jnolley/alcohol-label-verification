@@ -58,8 +58,8 @@ describe('LabelFormComponent', () => {
     });
   });
 
-  describe('form submission', () => {
-    it('should emit formSubmit when form is valid and onSubmit called', () => {
+  describe('form auto-emission', () => {
+    it('should emit formSubmit when form is valid', () => {
       let emittedData: any;
       component.formSubmit.subscribe(data => {
         emittedData = data;
@@ -72,8 +72,6 @@ describe('LabelFormComponent', () => {
         netContentsValue: 750,
         netContentsUnit: 'ml'
       });
-
-      component.onSubmit();
 
       expect(emittedData).toBeDefined();
       expect(emittedData.brandName).toBe('Test Brand');
@@ -95,7 +93,6 @@ describe('LabelFormComponent', () => {
         alcoholContent: 45
       });
 
-      component.onSubmit();
       expect(emitCount).toBe(0);
     });
 
@@ -111,14 +108,12 @@ describe('LabelFormComponent', () => {
         alcoholContent: '45.5'
       });
 
-      component.onSubmit();
-
       expect(emittedData).toBeDefined();
       expect(typeof emittedData.alcoholContent).toBe('number');
       expect(emittedData.alcoholContent).toBe(45.5);
     });
 
-    it('should handle submission without optional netContentsValue', () => {
+    it('should handle optional netContentsValue being empty', () => {
       let emittedData: any;
       component.formSubmit.subscribe(data => {
         emittedData = data;
@@ -131,8 +126,6 @@ describe('LabelFormComponent', () => {
         netContentsValue: '',
         netContentsUnit: 'ml'
       });
-
-      component.onSubmit();
 
       expect(emittedData).toBeDefined();
       expect(emittedData.netContentsValue).toBeUndefined();

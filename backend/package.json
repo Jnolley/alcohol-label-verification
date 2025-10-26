@@ -23,8 +23,8 @@
     "fuzzball": "^2.2.3",
     "http-errors": "^2.0.0",
     "multer": "^2.0.2",
-    "tesseract.js": "^6.0.1",
-    "zod": "^4.1.12"
+    "sharp": "^0.34.4",
+    "tesseract.js": "^6.0.1"
   },
   "devDependencies": {
     "@types/convert-units": "^2.3.12",
