@@ -1,0 +1,52 @@
+<div class="space-y-4">
+  <!-- Controls -->
+  <div class="flex items-center justify-between">
+    <button
+      (click)="toggleAnnotations()"
+      class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+    >
+      {{ showAnnotations() ? 'Hide Annotations' : 'Show Annotations' }}
+    </button>
+
+    <!-- Color Legend -->
+    <div class="flex items-center gap-4 text-sm">
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 border-2 rounded" style="border-color: #10b981;"></div>
+        <span>Match</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 border-2 rounded" style="border-color: #ef4444;"></div>
+        <span>Mismatch</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 border-2 rounded" style="border-color: rgba(156, 163, 175, 0.6);"></div>
+        <span>Unmatched</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas Container -->
+  <div class="relative bg-gray-50 rounded-lg p-4 inline-block">
+    <canvas
+      #canvas
+      (mousemove)="onMouseMove($event)"
+      (mouseleave)="onMouseLeave()"
+      class="max-w-full h-auto shadow-lg"
+    ></canvas>
+
+    <!-- Tooltip -->
+    @if (tooltip()) {
+      <div
+        class="fixed z-50 bg-gray-900 text-white text-sm rounded-lg shadow-lg px-3 py-2 pointer-events-none"
+        [style.left.px]="tooltip()!.x + 10"
+        [style.top.px]="tooltip()!.y + 10"
+      >
+        <div class="font-semibold">{{ tooltip()!.text }}</div>
+        <div class="text-gray-300">Confidence: {{ (tooltip()!.confidence * 100).toFixed(1) }}%</div>
+        @if (tooltip()!.fieldType) {
+          <div class="text-gray-300">Field: {{ tooltip()!.fieldType }}</div>
+        }
+      </div>
+    }
+  </div>
+</div>

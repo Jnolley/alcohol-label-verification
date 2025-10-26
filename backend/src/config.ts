@@ -3,7 +3,7 @@
  * All configurable constants and thresholds are defined here
  */
 
-export const config = {
+const config = {
   /**
    * Image Validation Configuration
    */
@@ -26,6 +26,7 @@ export const config = {
    * Verification Configuration
    */
   verification: {
+    fuzzyMatchThreshold: 90, // Minimum similarity % for fuzzy matching (0-100)
     alcoholContentTolerance: 0.0, // Allowed difference in ABV percentage (exact match)
     brandNameMinWordMatch: 0.99, // Minimum percentage of brand words that must match (99%)
     productTypeMinKeywordMatch: 1, // Minimum number of product type keywords that must match
@@ -52,11 +53,31 @@ export const config = {
   },
 
   /**
+   * Logging Configuration
+   */
+  logging: {
+    enabled: process.env.LOG_ENABLED !== 'false', // Enable/disable logging
+    level: process.env.LOG_LEVEL || 'info', // Log level: 'debug', 'info', 'warn', 'error'
+    logRequests: process.env.LOG_REQUESTS !== 'false', // Log all verification requests
+    logOCRResults: process.env.LOG_OCR_RESULTS !== 'false', // Log OCR extraction details
+    logFieldChecks: process.env.LOG_FIELD_CHECKS !== 'false', // Log individual field verification results
+  },
+
+  /**
    * Server Configuration
    */
   server: {
     port: process.env.PORT || 3000,
     corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:4200',
+  },
+
+  /**
+   * Admin Configuration
+   * Simple hardcoded credentials for MVP admin access
+   */
+  admin: {
+    username: process.env.ADMIN_USERNAME || 'admin',
+    password: process.env.ADMIN_PASSWORD || 'admin123',
   },
 } as const;
 

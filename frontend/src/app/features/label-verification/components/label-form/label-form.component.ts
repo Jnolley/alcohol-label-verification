@@ -27,32 +27,22 @@ export class LabelFormComponent {
       netContentsUnit: ['ml']
     });
 
-    // Emit form data whenever form changes and is valid
     this.form.valueChanges.subscribe(() => {
       if (this.form.valid) {
-        const formValue = this.form.value;
-        this.formSubmit.emit({
-          brandName: formValue.brandName,
-          productType: formValue.productType,
-          alcoholContent: Number(formValue.alcoholContent),
-          netContentsValue: formValue.netContentsValue ? Number(formValue.netContentsValue) : undefined,
-          netContentsUnit: formValue.netContentsValue ? formValue.netContentsUnit : undefined
-        } as LabelFormData);
+        this.emitFormData();
       }
     });
   }
 
-  onSubmit(): void {
-    if (this.form.valid) {
-      const formValue = this.form.value;
-      this.formSubmit.emit({
-        brandName: formValue.brandName,
-        productType: formValue.productType,
-        alcoholContent: Number(formValue.alcoholContent),
-        netContentsValue: formValue.netContentsValue ? Number(formValue.netContentsValue) : undefined,
-        netContentsUnit: formValue.netContentsValue ? formValue.netContentsUnit : undefined
-      } as LabelFormData);
-    }
+  private emitFormData(): void {
+    const formValue = this.form.value;
+    this.formSubmit.emit({
+      brandName: formValue.brandName,
+      productType: formValue.productType,
+      alcoholContent: Number(formValue.alcoholContent),
+      netContentsValue: formValue.netContentsValue ? Number(formValue.netContentsValue) : undefined,
+      netContentsUnit: formValue.netContentsValue ? formValue.netContentsUnit : undefined
+    } as LabelFormData);
   }
 
   get brandName() {

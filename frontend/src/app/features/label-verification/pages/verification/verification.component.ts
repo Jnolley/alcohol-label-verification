@@ -1,5 +1,4 @@
 import { Component, inject, viewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { LabelFormComponent } from '../../components/label-form/label-form.component';
 import { ImageUploadComponent } from '../../components/image-upload/image-upload.component';
 import { VerificationModalComponent } from '../../components/verification-modal/verification-modal.component';
@@ -10,7 +9,6 @@ import { LabelFormData } from '../../../../shared/models/label-form-data.model';
   selector: 'app-verification',
   standalone: true,
   imports: [
-    CommonModule,
     LabelFormComponent,
     ImageUploadComponent,
     VerificationModalComponent

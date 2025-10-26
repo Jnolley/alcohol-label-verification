@@ -1,0 +1,159 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        <p class="text-sm text-gray-600 mt-1">TTB Label Verification System</p>
+      </div>
+      <div class="flex gap-4">
+        <a routerLink="/" class="text-sm text-primary hover:underline">View Site</a>
+        <button
+          (click)="logout()"
+          class="text-sm text-error hover:underline"
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Filter Buttons -->
+    <div class="mb-6 flex gap-2 flex-wrap">
+      <button
+        (click)="filterBy('all')"
+        [class.bg-primary]="activeFilter() === 'all'"
+        [class.text-white]="activeFilter() === 'all'"
+        [class.bg-gray-200]="activeFilter() !== 'all'"
+        [class.text-gray-700]="activeFilter() !== 'all'"
+        class="px-4 py-2 rounded font-medium hover:opacity-80 transition-opacity"
+      >
+        All ({{ submissions().length }})
+      </button>
+      <button
+        (click)="filterBy(SubmissionStatus.PENDING)"
+        [class.bg-yellow-500]="activeFilter() === SubmissionStatus.PENDING"
+        [class.text-white]="activeFilter() === SubmissionStatus.PENDING"
+        [class.bg-gray-200]="activeFilter() !== SubmissionStatus.PENDING"
+        [class.text-gray-700]="activeFilter() !== SubmissionStatus.PENDING"
+        class="px-4 py-2 rounded font-medium hover:opacity-80 transition-opacity"
+      >
+        Pending ({{ pendingCount() }})
+      </button>
+      <button
+        (click)="filterBy(SubmissionStatus.APPROVED)"
+        [class.bg-green-500]="activeFilter() === SubmissionStatus.APPROVED"
+        [class.text-white]="activeFilter() === SubmissionStatus.APPROVED"
+        [class.bg-gray-200]="activeFilter() !== SubmissionStatus.APPROVED"
+        [class.text-gray-700]="activeFilter() !== SubmissionStatus.APPROVED"
+        class="px-4 py-2 rounded font-medium hover:opacity-80 transition-opacity"
+      >
+        Approved ({{ approvedCount() }})
+      </button>
+      <button
+        (click)="filterBy(SubmissionStatus.REJECTED)"
+        [class.bg-red-500]="activeFilter() === SubmissionStatus.REJECTED"
+        [class.text-white]="activeFilter() === SubmissionStatus.REJECTED"
+        [class.bg-gray-200]="activeFilter() !== SubmissionStatus.REJECTED"
+        [class.text-gray-700]="activeFilter() !== SubmissionStatus.REJECTED"
+        class="px-4 py-2 rounded font-medium hover:opacity-80 transition-opacity"
+      >
+        Rejected ({{ rejectedCount() }})
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="bg-white rounded-lg shadow p-8 text-center">
+        <p class="text-gray-600">Loading submissions...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @if (error()) {
+      <div class="bg-white rounded-lg shadow p-8">
+        <div class="p-3 bg-red-50 border border-error rounded">
+          <p class="text-sm text-error">{{ error() }}</p>
+        </div>
+        <button
+          (click)="loadSubmissions()"
+          class="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
+        >
+          Retry
+        </button>
+      </div>
+    }
+
+    <!-- Submissions Table -->
+    @if (!loading() && !error()) {
+      @if (filteredSubmissions().length === 0) {
+        <div class="bg-white rounded-lg shadow p-8 text-center">
+          <p class="text-gray-600">No submissions found.</p>
+        </div>
+      } @else {
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ID
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Brand Name
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Product Type
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Submitted
+                </th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              @for (submission of filteredSubmissions(); track submission.id) {
+                <tr class="hover:bg-gray-50 cursor-pointer" [routerLink]="['/admin/submissions', submission.id]">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {{ submission.id }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ submission.formData.brandName }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ submission.formData.productType }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span
+                      class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                      [ngClass]="getStatusBadgeClass(submission.status)"
+                    >
+                      {{ submission.status }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ formatDate(submission.timestamp) }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <a
+                      [routerLink]="['/admin/submissions', submission.id]"
+                      class="text-primary hover:underline"
+                    >
+                      Review →
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </main>
+</div>

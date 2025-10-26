@@ -1,16 +1,15 @@
 import { VerificationManager } from '../implementation/verification-manager';
-import { IFieldValidator } from '../../../validation/field-validation';
-import { IImageValidator } from '../../../utility/image-processing';
-import { ITextExtractor } from '../../../engine/ocr';
-import { ILabelVerifier } from '../../../engine/verification';
-import {
-  FormData,
-  VerificationResult,
-  FieldCheck,
-  FieldType,
-  MatchStatus,
-} from '../../../../common';
-import { ExtractedText } from '../../../engine/ocr';
+import { IFieldValidator } from '../../../validation/field-validation/interface/field-validator.interface';
+import { IImageValidator } from '../../../utility/image-processing/interface/image-validator.interface';
+import { ITextExtractor } from '../../../engine/ocr/interface/text-extractor.interface';
+import { ILabelVerifier } from '../../../engine/verification/interface/label-verifier.interface';
+import { ILogger } from '../../../utility/logging/interface/logger.interface';
+import { FormData } from '../../../../common/contracts/form-data';
+import { VerificationResult } from '../../../../common/contracts/verification-result';
+import { FieldCheck } from '../../../../common/contracts/field-check';
+import { FieldType } from '../../../../common/enums/field-type';
+import { MatchStatus } from '../../../../common/enums/match-status';
+import { ExtractedText } from '../../../engine/ocr/contracts/extracted-text';
 import createError from 'http-errors';
 
 describe('VerificationManager', () => {
@@ -19,6 +18,7 @@ describe('VerificationManager', () => {
   let mockImageValidator: jest.Mocked<IImageValidator>;
   let mockTextExtractor: jest.Mocked<ITextExtractor>;
   let mockLabelVerifier: jest.Mocked<ILabelVerifier>;
+  let mockLogger: jest.Mocked<ILogger>;
 
   beforeEach(() => {
     mockFieldValidator = {
@@ -37,11 +37,19 @@ describe('VerificationManager', () => {
       verify: jest.fn(),
     };
 
+    mockLogger = {
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      debug: jest.fn(),
+    };
+
     manager = new VerificationManager(
       mockFieldValidator,
       mockImageValidator,
       mockTextExtractor,
-      mockLabelVerifier
+      mockLabelVerifier,
+      mockLogger
     );
   });
 
@@ -57,6 +65,7 @@ describe('VerificationManager', () => {
     raw: 'Old Tom Distillery Kentucky Straight Bourbon Whiskey 45% 750mL',
     normalized: 'OLD TOM DISTILLERY KENTUCKY STRAIGHT BOURBON WHISKEY 45% 750ML',
     confidence: 90,
+    words: [],
   });
 
   const createSuccessResult = (): VerificationResult => ({
@@ -283,6 +292,7 @@ describe('VerificationManager', () => {
         raw: 'Some barely readable text',
         normalized: 'SOME BARELY READABLE TEXT',
         confidence: 45,
+        words: [],
       };
 
       mockImageValidator.validate.mockResolvedValue(undefined);
@@ -305,6 +315,7 @@ describe('VerificationManager', () => {
         raw: 'BOURBON',
         normalized: 'BOURBON',
         confidence: 80,
+        words: [],
       };
 
       mockImageValidator.validate.mockResolvedValue(undefined);

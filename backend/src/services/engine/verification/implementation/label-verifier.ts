@@ -1,7 +1,11 @@
 import { ILabelVerifier } from '../interface/label-verifier.interface';
-import { FormData, VerificationResult, FieldCheck, FieldType, MatchStatus } from '../../../../common';
-import { ExtractedText } from '../../ocr';
-import { INormalizer } from '../../../utility/normalization';
+import { FormData } from '../../../../common/contracts/form-data';
+import { VerificationResult } from '../../../../common/contracts/verification-result';
+import { FieldCheck } from '../../../../common/contracts/field-check';
+import { FieldType } from '../../../../common/enums/field-type';
+import { MatchStatus } from '../../../../common/enums/match-status';
+import { ExtractedText } from '../../ocr/contracts/extracted-text';
+import { INormalizer } from '../../../utility/normalization/interface/normalizer.interface';
 import config from '../../../../config';
 import * as fuzzball from 'fuzzball';
 
@@ -45,10 +49,10 @@ export class LabelVerifier implements ILabelVerifier {
       };
     }
 
-    // Use fuzzy matching with 90% threshold
+    // Use fuzzy matching
     const score = fuzzball.partial_ratio(normalizedBrand, normalizedExtracted);
 
-    if (score >= 90) {
+    if (score >= config.verification.fuzzyMatchThreshold) {
       return {
         fieldType: FieldType.BrandName,
         status: MatchStatus.Match,
@@ -81,10 +85,10 @@ export class LabelVerifier implements ILabelVerifier {
       };
     }
 
-    // Use fuzzy matching with 90% threshold
+    // Use fuzzy matching
     const score = fuzzball.partial_ratio(normalizedType, normalizedExtracted);
 
-    if (score >= 90) {
+    if (score >= config.verification.fuzzyMatchThreshold) {
       return {
         fieldType: FieldType.ProductType,
         status: MatchStatus.Match,
@@ -227,7 +231,7 @@ export class LabelVerifier implements ILabelVerifier {
   private verifyGovernmentWarning(extractedText: string): FieldCheck {
     const requiredSections = config.requiredTexts.governmentWarningSections;
 
-    const foundSections = requiredSections.filter(section =>
+    const foundSections = requiredSections.filter((section: string) =>
       extractedText.includes(section)
     );
 

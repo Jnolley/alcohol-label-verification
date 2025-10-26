@@ -12,4 +12,10 @@ export interface VerificationResult {
 
   /** Individual field check results */
   fieldChecks: FieldCheck[];
+
+  /**
+   * NEW: Indicates if submission is under admin review
+   * Only present when success=false and submission was auto-saved
+   */
+  underReview?: boolean;
 }

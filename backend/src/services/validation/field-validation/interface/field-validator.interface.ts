@@ -1,4 +1,4 @@
-import { FormData } from '../../../../common';
+import { FormData } from '../../../../common/contracts/form-data';
 
 export interface IFieldValidator {
   validate(formData: FormData): void;

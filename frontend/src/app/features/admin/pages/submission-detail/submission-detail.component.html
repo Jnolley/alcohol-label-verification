@@ -1,0 +1,198 @@
+@if (submission()) {
+  <div class="max-w-7xl mx-auto p-6 space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <button
+          (click)="goBack()"
+          class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+        >
+          ← Back to Dashboard
+        </button>
+        <h1 class="text-2xl font-bold">Submission #{{ submission()!.id }}</h1>
+        <span
+          class="px-3 py-1 text-sm rounded-full font-medium"
+          [ngClass]="getStatusBadgeClass(submission()!.status)"
+        >
+          {{ submission()!.status }}
+        </span>
+      </div>
+      <div class="text-sm text-gray-600">
+        Submitted: {{ submission()!.timestamp | date:'medium' }}
+      </div>
+    </div>
+
+    <!-- Error Display -->
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md">
+        {{ error() }}
+      </div>
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Left Column: Form Data & Verification Results -->
+      <div class="space-y-6">
+        <!-- Form Data Card -->
+        <div class="bg-white shadow-md rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4">Form Data</h2>
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+              <div class="text-gray-600">Brand Name:</div>
+              <div class="font-medium">{{ submission()!.formData.brandName }}</div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="text-gray-600">Product Type:</div>
+              <div class="font-medium">{{ submission()!.formData.productType }}</div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="text-gray-600">Net Contents:</div>
+              <div class="font-medium">{{ submission()!.formData.netContentsValue }} {{ submission()!.formData.netContentsUnit }}</div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="text-gray-600">Alcohol Content:</div>
+              <div class="font-medium">{{ submission()!.formData.alcoholContent }}%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification Results Card -->
+        <div class="bg-white shadow-md rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4">Verification Results</h2>
+
+          <div class="mb-4 p-4 rounded-md"
+               [ngClass]="submission()!.verificationResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
+            <div class="font-semibold"
+                 [ngClass]="submission()!.verificationResult.success ? 'text-green-800' : 'text-red-800'">
+              {{ submission()!.verificationResult.success ? 'Verification Passed' : 'Verification Failed' }}
+            </div>
+            @if (submission()!.verificationResult.message) {
+              <div class="text-sm mt-1"
+                   [ngClass]="submission()!.verificationResult.success ? 'text-green-700' : 'text-red-700'">
+                {{ submission()!.verificationResult.message }}
+              </div>
+            }
+          </div>
+
+          <!-- Field Checks -->
+          <div class="space-y-3">
+            <h3 class="font-semibold text-gray-700">Field Checks:</h3>
+            @for (check of submission()!.verificationResult.fieldChecks; track check.fieldType) {
+              <div class="border border-gray-200 rounded-md p-3">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="font-medium">{{ check.fieldType }}</div>
+                  <span
+                    class="px-2 py-1 text-xs rounded-full font-medium"
+                    [ngClass]="getMatchStatusBadgeClass(check.status)"
+                  >
+                    {{ check.status }}
+                  </span>
+                </div>
+                <div class="text-sm space-y-1">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="text-gray-600">Expected:</div>
+                    <div>{{ check.expected || 'N/A' }}</div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="text-gray-600">Found:</div>
+                    <div>{{ check.found || 'N/A' }}</div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- OCR Confidence -->
+          <div class="mt-4 pt-4 border-t border-gray-200">
+            <div class="text-sm text-gray-600">
+              OCR Confidence:
+              <span class="font-medium text-gray-900">
+                {{ (submission()!.ocrData.confidence * 100).toFixed(1) }}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Annotated Image -->
+      <div class="space-y-6">
+        <div class="bg-white shadow-md rounded-lg p-6">
+          <h2 class="text-xl font-semibold mb-4">Label Image</h2>
+          <app-image-annotator
+            [imageBase64]="submission()!.imageBase64"
+            [ocrData]="submission()!.ocrData"
+            [verificationResult]="submission()!.verificationResult"
+          ></app-image-annotator>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Actions Card -->
+    @if (submission()!.status === SubmissionStatus.PENDING) {
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-4">Admin Actions</h2>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Admin Notes
+            </label>
+            <textarea
+              [(ngModel)]="adminNotes"
+              rows="4"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Add notes about this submission..."
+            ></textarea>
+          </div>
+
+          <div class="flex gap-4">
+            <button
+              (click)="approve()"
+              [disabled]="isSubmitting()"
+              class="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              {{ isSubmitting() ? 'Processing...' : 'Approve Submission' }}
+            </button>
+            <button
+              (click)="reject()"
+              [disabled]="isSubmitting()"
+              class="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              {{ isSubmitting() ? 'Processing...' : 'Reject Submission' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <!-- Show review info for non-pending submissions -->
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-4">Review Information</h2>
+        <div class="space-y-2 text-sm">
+          @if (submission()!.reviewedAt) {
+            <div class="grid grid-cols-2 gap-2">
+              <div class="text-gray-600">Reviewed At:</div>
+              <div>{{ submission()!.reviewedAt | date:'medium' }}</div>
+            </div>
+          }
+          @if (submission()!.reviewedBy) {
+            <div class="grid grid-cols-2 gap-2">
+              <div class="text-gray-600">Reviewed By:</div>
+              <div>{{ submission()!.reviewedBy }}</div>
+            </div>
+          }
+          @if (submission()!.adminNotes) {
+            <div class="mt-4">
+              <div class="text-gray-600 font-medium mb-1">Admin Notes:</div>
+              <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                {{ submission()!.adminNotes }}
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="max-w-7xl mx-auto p-6">
+    <div class="text-center text-gray-600">Loading submission...</div>
+  </div>
+}

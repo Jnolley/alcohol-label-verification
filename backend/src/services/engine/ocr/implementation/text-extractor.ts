@@ -3,20 +3,33 @@ import { ITextExtractor } from '../interface/text-extractor.interface';
 import { ExtractedText } from '../contracts/extracted-text';
 import createError from 'http-errors';
 import config from '../../../../config';
+import { ImagePreprocessor } from '../../../utility/image-processing/implementation/image-preprocessor';
+import { IImagePreprocessor } from '../../../utility/image-processing/interface/image-preprocessor.interface';
 
 export class TextExtractor implements ITextExtractor {
+  private preprocessor: IImagePreprocessor;
+
+  constructor(preprocessor?: IImagePreprocessor) {
+    this.preprocessor = preprocessor || new ImagePreprocessor();
+  }
+
   async extract(buffer: Buffer): Promise<ExtractedText> {
+    // Preprocess the image for better OCR results
+    const processedBuffer = await this.preprocessor.preprocessForOCR(buffer);
     const worker = await createWorker(config.ocr.language);
 
     try {
-      // Set Tesseract parameters for better label reading
-      // PSM 6: Assume a single uniform block of text (best for bottle labels)
+      // Set Tesseract parameters optimized for bottle labels
+      // PSM 11: Sparse text - finds scattered text without assuming order (best for product labels)
+      // OEM 1: LSTM Neural Net mode (most accurate for modern use)
       await worker.setParameters({
-        tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
+        tessedit_pageseg_mode: PSM.SPARSE_TEXT,
+        tessedit_ocr_engine_mode: '1', // LSTM only
         preserve_interword_spaces: '1',
       });
 
-      const { data } = await worker.recognize(buffer);
+      // Enable blocks output to get word-level bounding boxes (required in v6+)
+      const { data } = await worker.recognize(processedBuffer, {}, { blocks: true });
 
       // Check if any text was extracted
       if (!data.text || data.text.trim().length === 0) {
@@ -43,10 +56,27 @@ export class TextExtractor implements ITextExtractor {
         );
       }
 
+      // Extract word-level bounding boxes from blocks structure (Tesseract v6+)
+      const words = (data as any).blocks
+        ?.flatMap((block: any) => block.paragraphs || [])
+        .flatMap((paragraph: any) => paragraph.lines || [])
+        .flatMap((line: any) => line.words || [])
+        .map((word: any) => ({
+          text: word.text,
+          bbox: {
+            x: word.bbox.x0,
+            y: word.bbox.y0,
+            width: word.bbox.x1 - word.bbox.x0,
+            height: word.bbox.y1 - word.bbox.y0,
+          },
+          confidence: word.confidence,
+        })) || [];
+
       return {
         raw: data.text,
         normalized,
         confidence: data.confidence,
+        words,
       };
     } catch (error) {
       if (createError.isHttpError(error)) {
