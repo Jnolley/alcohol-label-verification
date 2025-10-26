@@ -3,7 +3,6 @@ import { IFieldValidator } from '../../../validation/field-validation/interface/
 import { IImageValidator } from '../../../utility/image-processing/interface/image-validator.interface';
 import { ITextExtractor } from '../../../engine/ocr/interface/text-extractor.interface';
 import { ILabelVerifier } from '../../../engine/verification/interface/label-verifier.interface';
-import { ILogger } from '../../../utility/logging/interface/logger.interface';
 import { FormData } from '../../../../common/contracts/form-data';
 import { VerificationResult } from '../../../../common/contracts/verification-result';
 import { FieldCheck } from '../../../../common/contracts/field-check';
@@ -18,7 +17,6 @@ describe('VerificationManager', () => {
   let mockImageValidator: jest.Mocked<IImageValidator>;
   let mockTextExtractor: jest.Mocked<ITextExtractor>;
   let mockLabelVerifier: jest.Mocked<ILabelVerifier>;
-  let mockLogger: jest.Mocked<ILogger>;
 
   beforeEach(() => {
     mockFieldValidator = {
@@ -37,19 +35,11 @@ describe('VerificationManager', () => {
       verify: jest.fn(),
     };
 
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn(),
-    };
-
     manager = new VerificationManager(
       mockFieldValidator,
       mockImageValidator,
       mockTextExtractor,
-      mockLabelVerifier,
-      mockLogger
+      mockLabelVerifier
     );
   });
 
