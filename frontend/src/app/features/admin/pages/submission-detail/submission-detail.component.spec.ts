@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { SubmissionDetailComponent } from './submission-detail.component';
+import { AdminService } from '../../services/admin.service';
 
 describe('SubmissionDetailComponent', () => {
   let component: SubmissionDetailComponent;
@@ -8,7 +11,13 @@ describe('SubmissionDetailComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SubmissionDetailComponent]
+      imports: [SubmissionDetailComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        AdminService,
+      ],
     })
     .compileComponents();
 

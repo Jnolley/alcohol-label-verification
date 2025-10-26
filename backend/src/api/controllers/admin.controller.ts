@@ -6,82 +6,45 @@ import { SubmissionStatus } from '../../storage/contracts/submission';
 export class AdminController {
   constructor(private submissionStore: SubmissionStore) {}
 
-  /**
-   * POST /api/admin/login
-   * Validate admin credentials (middleware already checked, just return success)
-   */
   login = async (req: Request, res: Response): Promise<void> => {
-    try {
-      // If we reached here, auth middleware already validated credentials
-      res.json({
-        success: true,
-        message: 'Login successful',
-      });
-    } catch (error) {
-      this.handleError(res, error);
-    }
+    res.json({ success: true, message: 'Login successful' });
   };
 
-  /**
-   * GET /api/admin/submissions
-   * Get all submissions, optionally filtered by status
-   */
   getSubmissions = async (req: Request, res: Response): Promise<void> => {
     try {
       const { status } = req.query;
 
-      let submissions;
-      if (status && Object.values(SubmissionStatus).includes(status as SubmissionStatus)) {
-        submissions = this.submissionStore.getAll(status as SubmissionStatus);
-      } else {
-        submissions = this.submissionStore.getAll();
-      }
+      const submissions = status && Object.values(SubmissionStatus).includes(status as SubmissionStatus)
+        ? this.submissionStore.getAll(status as SubmissionStatus)
+        : this.submissionStore.getAll();
 
-      // Sort by timestamp, newest first
       submissions.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-      res.json({
-        success: true,
-        count: submissions.length,
-        submissions,
-      });
+      res.json({ success: true, count: submissions.length, submissions });
     } catch (error) {
       this.handleError(res, error);
     }
   };
 
-  /**
-   * GET /api/admin/submissions/:id
-   * Get a specific submission by ID
-   */
   getSubmissionById = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
-      const submission = this.submissionStore.getById(id);
+      const submission = this.submissionStore.getById(req.params.id);
 
       if (!submission) {
-        throw createError(404, `Submission ${id} not found`);
+        throw createError(404, `Submission ${req.params.id} not found`);
       }
 
-      res.json({
-        success: true,
-        submission,
-      });
+      res.json({ success: true, submission });
     } catch (error) {
       this.handleError(res, error);
     }
   };
 
-  /**
-   * PATCH /api/admin/submissions/:id
-   * Update submission status (approve/reject)
-   */
   updateSubmissionStatus = async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
       const { status, adminNotes, reviewedBy } = req.body;
 
-      // Validate status
       if (!status || !Object.values(SubmissionStatus).includes(status)) {
         throw createError(400, 'Invalid status. Must be: pending, approved, or rejected');
       }
@@ -97,11 +60,7 @@ export class AdminController {
         throw createError(404, `Submission ${id} not found`);
       }
 
-      res.json({
-        success: true,
-        message: `Submission ${status}`,
-        submission: updatedSubmission,
-      });
+      res.json({ success: true, message: `Submission ${status}`, submission: updatedSubmission });
     } catch (error) {
       this.handleError(res, error);
     }

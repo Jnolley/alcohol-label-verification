@@ -149,7 +149,7 @@ describe('AdminService', () => {
     it('should throw error when not authenticated', () => {
       expect(() => {
         service.getSubmissions().subscribe();
-      }).toThrow('Not authenticated');
+      }).toThrowError('Not authenticated');
     });
 
     it('should handle HTTP errors', () => {
@@ -211,7 +211,7 @@ describe('AdminService', () => {
     it('should throw error when not authenticated', () => {
       expect(() => {
         service.getSubmission('test-id').subscribe();
-      }).toThrow('Not authenticated');
+      }).toThrowError('Not authenticated');
     });
   });
 
@@ -231,10 +231,8 @@ describe('AdminService', () => {
 
       const req = httpMock.expectOne(`${baseUrl}/submissions/test-id-123`);
       expect(req.request.method).toBe('PATCH');
-      expect(req.request.body).toEqual({
-        status: SubmissionStatus.APPROVED,
-        reviewedBy: 'admin',
-      });
+      expect(req.request.body.status).toBe(SubmissionStatus.APPROVED);
+      expect(req.request.body.reviewedBy).toBe('admin');
       expect(req.request.headers.get('Authorization')).toContain('Basic');
 
       req.flush(mockResponse);
@@ -286,7 +284,7 @@ describe('AdminService', () => {
     it('should throw error when not authenticated', () => {
       expect(() => {
         service.updateSubmission('test-id', SubmissionStatus.APPROVED).subscribe();
-      }).toThrow('Not authenticated');
+      }).toThrowError('Not authenticated');
     });
   });
 

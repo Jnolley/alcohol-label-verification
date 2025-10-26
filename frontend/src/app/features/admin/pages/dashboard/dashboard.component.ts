@@ -22,10 +22,8 @@ export class DashboardComponent implements OnInit {
   error = signal<string | null>(null);
   activeFilter = signal<SubmissionStatus | 'all'>('all');
 
-  // Expose enum to template
   readonly SubmissionStatus = SubmissionStatus;
 
-  // Computed counts for each status
   pendingCount = computed(() =>
     this.submissions().filter(s => s.status === SubmissionStatus.PENDING).length
   );

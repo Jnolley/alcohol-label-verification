@@ -18,7 +18,6 @@ const config = {
   ocr: {
     minConfidence: 30, // Minimum OCR confidence percentage (0-100)
     minTextLength: 3, // Minimum number of characters to extract
-    warningConfidenceThreshold: 60, // Log warning if confidence is below this
     language: 'eng', // Tesseract language model to use
   },
 
@@ -50,17 +49,6 @@ const config = {
       'OPERATE MACHINERY',
       'MAY CAUSE HEALTH PROBLEMS',
     ],
-  },
-
-  /**
-   * Logging Configuration
-   */
-  logging: {
-    enabled: process.env.LOG_ENABLED !== 'false', // Enable/disable logging
-    level: process.env.LOG_LEVEL || 'info', // Log level: 'debug', 'info', 'warn', 'error'
-    logRequests: process.env.LOG_REQUESTS !== 'false', // Log all verification requests
-    logOCRResults: process.env.LOG_OCR_RESULTS !== 'false', // Log OCR extraction details
-    logFieldChecks: process.env.LOG_FIELD_CHECKS !== 'false', // Log individual field verification results
   },
 
   /**

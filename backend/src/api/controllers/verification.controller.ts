@@ -30,7 +30,6 @@ export class VerificationController {
         netContentsUnit: req.body.netContentsUnit,
       };
 
-      // Use extended verification if submission store is available
       if (this.submissionStore && this.verificationManager instanceof VerificationManager) {
         const { result, ocrData } = await this.verificationManager.processVerificationExtended(
           formData,
@@ -38,11 +37,11 @@ export class VerificationController {
           req.file.originalname
         );
 
-        // Save all submissions to admin panel
-        const imageBase64 = req.file.buffer.toString('base64');
+        // Use preprocessed image so admin sees exactly what OCR processed
+        const imageBuffer = ocrData.processedImageBuffer || req.file.buffer;
+        const imageBase64 = imageBuffer.toString('base64');
         this.submissionStore.add(formData, imageBase64, ocrData, result);
 
-        // If verification failed, notify user it's under review
         if (!result.success) {
           res.status(200).json({
             success: false,
@@ -53,7 +52,6 @@ export class VerificationController {
           return;
         }
 
-        // Verification passed
         res.status(200).json({
           success: result.success,
           underReview: false,
@@ -61,7 +59,6 @@ export class VerificationController {
           fieldChecks: result.fieldChecks,
         });
       } else {
-        // Fallback to regular verification (no admin review)
         const result = await this.verificationManager.processVerification(
           formData,
           req.file.buffer,

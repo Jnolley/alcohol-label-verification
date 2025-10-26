@@ -25,12 +25,17 @@ describe('LoginComponent', () => {
         provideRouter([]),
         { provide: AdminService, useValue: mockAdminService },
         { provide: AuthService, useValue: mockAuthService },
-        { provide: Router, useValue: mockRouter },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
+
+    // Get the actual Router instance from the injector and spy on it
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+    mockRouter.navigate = router.navigate as jasmine.Spy;
+
     fixture.detectChanges();
   });
 

@@ -50,7 +50,6 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
   private annotatedWords: AnnotatedWord[] = [];
 
   constructor(private toastService: ToastService) {
-    // Re-render when annotations toggle changes
     effect(() => {
       if (this.showAnnotations() !== undefined && this.image) {
         this.render();
@@ -59,7 +58,6 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Reinitialize when inputs change
     if ((changes['imageBase64'] || changes['ocrData'] || changes['verificationResult']) && this.canvasRef) {
       this.initCanvas();
     }
@@ -71,7 +69,6 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
 
   private initCanvas(): void {
     if (!this.imageBase64 || !this.ocrData || !this.verificationResult) {
-      console.log('ImageAnnotator: Missing required inputs');
       return;
     }
 
@@ -83,17 +80,14 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
       return;
     }
 
-    // Load image
     this.image = new Image();
     this.image.onload = () => {
-      console.log('ImageAnnotator: Image loaded successfully');
       this.setupCanvas();
       this.annotateWords();
       this.render();
     };
     this.image.onerror = () => {
       this.toastService.showError('Failed to load label image');
-      console.error('ImageAnnotator: Failed to load image');
     };
     this.image.src = `data:image/png;base64,${this.imageBase64}`;
   }
@@ -104,7 +98,6 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
     const canvas = this.canvasRef.nativeElement;
     const maxWidth = canvas.parentElement?.clientWidth || 800;
 
-    // Calculate scale to fit container
     this.scale = Math.min(maxWidth / this.image.width, 1);
 
     canvas.width = this.image.width * this.scale;
@@ -112,14 +105,8 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
   }
 
   private annotateWords(): void {
-    console.log('ImageAnnotator: Annotating words', {
-      wordsCount: this.ocrData.words?.length || 0,
-      sampleWords: this.ocrData.words?.slice(0, 3)
-    });
-
     if (!this.ocrData.words || this.ocrData.words.length === 0) {
       this.toastService.showWarning('No text was detected in the image');
-      console.warn('ImageAnnotator: No words to annotate');
       this.annotatedWords = [];
       return;
     }
@@ -133,11 +120,6 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
         color,
         fieldType,
       };
-    });
-
-    console.log('ImageAnnotator: Annotated words', {
-      count: this.annotatedWords.length,
-      sample: this.annotatedWords.slice(0, 3)
     });
   }
 
@@ -159,11 +141,11 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
 
   private getColorForWord(text: string, fieldType?: string): string {
     if (!fieldType) {
-      return 'rgba(156, 163, 175, 0.3)'; // Gray for unmatched words
+      return '#06b6d4'; // Cyan for other text (brighter, more visible)
     }
 
     const check = this.verificationResult.fieldChecks.find((c) => c.fieldType === fieldType);
-    if (!check) return 'rgba(156, 163, 175, 0.3)';
+    if (!check) return '#06b6d4';
 
     switch (check.status) {
       case MatchStatus.Match:
@@ -173,17 +155,15 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
       case MatchStatus.NotFound:
         return '#ef4444'; // Red
       default:
-        return 'rgba(156, 163, 175, 0.3)'; // Gray
+        return '#06b6d4'; // Cyan
     }
   }
 
   private render(): void {
     if (!this.ctx || !this.image) return;
 
-    // Clear canvas
     this.ctx.clearRect(0, 0, this.canvasRef.nativeElement.width, this.canvasRef.nativeElement.height);
 
-    // Draw image
     this.ctx.drawImage(
       this.image,
       0,
@@ -192,7 +172,6 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
       this.image.height * this.scale
     );
 
-    // Draw annotations if enabled
     if (this.showAnnotations()) {
       this.drawAnnotations();
     }
@@ -201,20 +180,11 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
   private drawAnnotations(): void {
     if (!this.ctx) return;
 
-    console.log('ImageAnnotator: Drawing annotations', {
-      count: this.annotatedWords.length,
-      scale: this.scale
-    });
-
-    this.annotatedWords.forEach((word, index) => {
+    this.annotatedWords.forEach((word) => {
       const x = word.bbox.x * this.scale;
       const y = word.bbox.y * this.scale;
       const width = word.bbox.width * this.scale;
       const height = word.bbox.height * this.scale;
-
-      if (index < 3) {
-        console.log(`Drawing box ${index}:`, { x, y, width, height, color: word.color, text: word.text });
-      }
 
       this.ctx!.strokeStyle = word.color;
       this.ctx!.lineWidth = 2;
@@ -233,7 +203,6 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
-    // Find word at position
     const word = this.findWordAtPosition(x, y);
 
     if (word) {

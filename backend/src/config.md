@@ -30,14 +30,12 @@ Used by: `ImageValidator`
 ocr: {
   minConfidence: 30,
   minTextLength: 3,
-  warningConfidenceThreshold: 60,
   language: 'eng'
 }
 ```
 
 **minConfidence**: Minimum OCR confidence % to accept (0-100)
 **minTextLength**: Minimum characters extracted
-**warningConfidenceThreshold**: Log warning if confidence below this
 **language**: Tesseract language model
 
 Used by: `TextExtractor`
@@ -88,28 +86,6 @@ Used by: `LabelVerifier.verifyGovernmentWarning()`
 
 ---
 
-### Logging Configuration
-
-```typescript
-logging: {
-  enabled: process.env.LOG_ENABLED !== 'false',
-  level: process.env.LOG_LEVEL || 'info',
-  logRequests: process.env.LOG_REQUESTS !== 'false',
-  logOCRResults: process.env.LOG_OCR_RESULTS !== 'false',
-  logFieldChecks: process.env.LOG_FIELD_CHECKS !== 'false'
-}
-```
-
-**enabled**: Master logging switch
-**level**: Log level (debug, info, warn, error)
-**logRequests**: Log all verification requests
-**logOCRResults**: Log OCR extraction details
-**logFieldChecks**: Log field verification results
-
-Used by: `ConsoleLogger`, `VerificationManager`
-
----
-
 ### Server Settings
 
 ```typescript
@@ -130,11 +106,6 @@ Override defaults via environment variables:
 
 - `PORT` - Server port
 - `CORS_ORIGIN` - CORS allowed origin
-- `LOG_ENABLED` - Enable/disable logging
-- `LOG_LEVEL` - Logging level
-- `LOG_REQUESTS` - Log verification requests
-- `LOG_OCR_RESULTS` - Log OCR results
-- `LOG_FIELD_CHECKS` - Log field checks
 
 ## Usage
 

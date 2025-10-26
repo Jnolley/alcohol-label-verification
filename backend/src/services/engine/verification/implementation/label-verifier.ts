@@ -38,27 +38,27 @@ export class LabelVerifier implements ILabelVerifier {
     const normalizedBrand = this.removePunctuation(brandName.toUpperCase().trim());
     const normalizedExtracted = this.removePunctuation(extractedText);
 
-    // Try exact match first
     if (normalizedExtracted.includes(normalizedBrand)) {
+      const foundText = this.extractMatchingText(normalizedBrand, extractedText);
       return {
         fieldType: FieldType.BrandName,
         status: MatchStatus.Match,
         message: 'Brand name found on label',
         expected: brandName,
-        found: brandName,
+        found: foundText || brandName,
       };
     }
 
-    // Use fuzzy matching
     const score = fuzzball.partial_ratio(normalizedBrand, normalizedExtracted);
 
     if (score >= config.verification.fuzzyMatchThreshold) {
+      const foundText = this.extractBestMatch(normalizedBrand, extractedText);
       return {
         fieldType: FieldType.BrandName,
         status: MatchStatus.Match,
-        message: `Brand name found on label (${score}% match)`,
+        message: 'Brand name found on label',
         expected: brandName,
-        found: brandName,
+        found: foundText || `~${brandName}`,
       };
     }
 
@@ -74,7 +74,6 @@ export class LabelVerifier implements ILabelVerifier {
     const normalizedType = this.removePunctuation(productType.toUpperCase().trim());
     const normalizedExtracted = this.removePunctuation(extractedText);
 
-    // Try exact match first
     if (normalizedExtracted.includes(normalizedType)) {
       return {
         fieldType: FieldType.ProductType,
@@ -85,14 +84,13 @@ export class LabelVerifier implements ILabelVerifier {
       };
     }
 
-    // Use fuzzy matching
     const score = fuzzball.partial_ratio(normalizedType, normalizedExtracted);
 
     if (score >= config.verification.fuzzyMatchThreshold) {
       return {
         fieldType: FieldType.ProductType,
         status: MatchStatus.Match,
-        message: `Product type found on label (${score}% match)`,
+        message: 'Product type found on label',
         expected: productType,
         found: productType,
       };
@@ -107,7 +105,6 @@ export class LabelVerifier implements ILabelVerifier {
   }
 
   private verifyAlcoholContent(alcoholContent: number, extractedText: string): FieldCheck {
-    // Find all percentage values in the text
     const percentageValues = this.extractPercentageValues(extractedText);
 
     for (const foundValue of percentageValues) {
@@ -124,7 +121,6 @@ export class LabelVerifier implements ILabelVerifier {
       }
     }
 
-    // Try to find the exact number in the text
     if (this.containsNumber(extractedText, alcoholContent)) {
       return {
         fieldType: FieldType.AlcoholContent,
@@ -149,16 +145,13 @@ export class LabelVerifier implements ILabelVerifier {
 
     while (i < text.length) {
       if (text[i] === '%') {
-        // Look backwards to find the number
         let numberStr = '';
         let j = i - 1;
 
-        // Skip whitespace
         while (j >= 0 && text[j] === ' ') {
           j--;
         }
 
-        // Extract number
         while (j >= 0 && (this.isDigit(text[j]) || text[j] === '.')) {
           numberStr = text[j] + numberStr;
           j--;
@@ -189,21 +182,23 @@ export class LabelVerifier implements ILabelVerifier {
   }
 
   private verifyNetContents(value: number, unit: string, extractedText: string): FieldCheck {
-    // Convert user input to milliliters
     const expectedMl = this.normalizer.convertToMilliliters(value, unit);
 
-    // Try to extract volume from label using normalizer
     const extractedMl = this.normalizer.normalizeVolume(extractedText);
 
     if (extractedMl !== null) {
-      // Exact match required - no tolerance
-      if (extractedMl === expectedMl) {
+      // Round both to 2 decimal places for comparison to avoid floating point errors
+      const roundedExpected = Math.round(expectedMl * 100) / 100;
+      const roundedExtracted = Math.round(extractedMl * 100) / 100;
+
+      // Exact match required - no tolerance (but with rounding for floating point)
+      if (roundedExtracted === roundedExpected) {
         return {
           fieldType: FieldType.NetContents,
           status: MatchStatus.Match,
           message: 'Net contents matches',
           expected: `${value} ${unit}`,
-          found: `${extractedMl} ml`,
+          found: `${roundedExtracted} ml`,
         };
       }
 
@@ -211,8 +206,8 @@ export class LabelVerifier implements ILabelVerifier {
         fieldType: FieldType.NetContents,
         status: MatchStatus.Mismatch,
         message: 'Net contents does not match label',
-        expected: `${value} ${unit} (${expectedMl} ml)`,
-        found: `${extractedMl} ml`,
+        expected: `${value} ${unit} (${roundedExpected} ml)`,
+        found: `${roundedExtracted} ml`,
       };
     }
 
@@ -228,21 +223,85 @@ export class LabelVerifier implements ILabelVerifier {
     return text.replace(/[^A-Z0-9 ]/g, '');
   }
 
+  /**
+   * Extract the actual matching text from OCR output
+   */
+  private extractMatchingText(searchTerm: string, extractedText: string): string | null {
+    const normalizedSearch = this.removePunctuation(searchTerm.toUpperCase());
+    const normalizedExtracted = this.removePunctuation(extractedText);
+
+    const index = normalizedExtracted.indexOf(normalizedSearch);
+    if (index === -1) return null;
+
+    // Extract the original text (with punctuation) from the same position
+    let charCount = 0;
+    let startIdx = 0;
+
+    for (let i = 0; i < extractedText.length; i++) {
+      const char = extractedText[i];
+      if (/[A-Z0-9 ]/.test(char.toUpperCase())) {
+        if (charCount === index) {
+          startIdx = i;
+          break;
+        }
+        charCount++;
+      }
+    }
+
+    return extractedText.substring(startIdx, startIdx + searchTerm.length).trim();
+  }
+
+  /**
+   * Extract best fuzzy match from OCR output
+   */
+  private extractBestMatch(searchTerm: string, extractedText: string): string | null {
+    const words = extractedText.split(/\s+/);
+    const searchWords = searchTerm.split(/\s+/);
+
+    // Try to find the best matching consecutive words
+    let bestMatch = '';
+    let bestScore = 0;
+
+    for (let i = 0; i <= words.length - searchWords.length; i++) {
+      const candidate = words.slice(i, i + searchWords.length).join(' ');
+      const score = fuzzball.ratio(this.removePunctuation(searchTerm.toUpperCase()), this.removePunctuation(candidate.toUpperCase()));
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = candidate;
+      }
+    }
+
+    return bestScore >= 70 ? bestMatch : null;
+  }
+
   private verifyGovernmentWarning(extractedText: string): FieldCheck {
     const requiredSections = config.requiredTexts.governmentWarningSections;
 
-    const foundSections = requiredSections.filter((section: string) =>
-      extractedText.includes(section)
-    );
+    // Use flexible keyword-based matching instead of exact phrase matching
+    // This handles OCR issues with line breaks and spacing
+    const foundSections = requiredSections.filter((section: string) => {
+      // For exact matches (short phrases), use exact matching
+      if (section.split(' ').length <= 3) {
+        return extractedText.includes(section);
+      }
 
-    // Require 100% match - all required sections must be present
-    if (foundSections.length === config.verification.governmentWarningMinSections) {
+      // For longer phrases, check if most key words are present
+      const keywords = section.split(' ').filter(word => word.length > 3); // Skip short words like "TO", "A", "OF"
+      const foundKeywords = keywords.filter(keyword => extractedText.includes(keyword));
+
+      // Require at least 80% of keywords to be present
+      return foundKeywords.length >= Math.ceil(keywords.length * 0.8);
+    });
+
+    // Require all sections to be present
+    if (foundSections.length >= config.verification.governmentWarningMinSections) {
       return {
         fieldType: FieldType.GovernmentWarning,
         status: MatchStatus.Match,
         message: 'Government warning verified on label',
         expected: config.requiredTexts.governmentWarning,
-        found: `All ${requiredSections.length} required sections found`,
+        found: `All required sections found`,
       };
     }
 

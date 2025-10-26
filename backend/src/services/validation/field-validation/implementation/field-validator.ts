@@ -4,7 +4,6 @@ import createError from 'http-errors';
 
 export class FieldValidator implements IFieldValidator {
   validate(formData: FormData): void {
-    // Validate brandName
     if (!formData.brandName || typeof formData.brandName !== 'string') {
       throw createError(400, 'Brand name is required');
     }
@@ -16,7 +15,6 @@ export class FieldValidator implements IFieldValidator {
       throw createError(400, 'Brand name cannot exceed 200 characters');
     }
 
-    // Validate productType
     if (!formData.productType || typeof formData.productType !== 'string') {
       throw createError(400, 'Product type is required');
     }
@@ -28,7 +26,6 @@ export class FieldValidator implements IFieldValidator {
       throw createError(400, 'Product type cannot exceed 200 characters');
     }
 
-    // Validate alcoholContent
     if (formData.alcoholContent === undefined || formData.alcoholContent === null) {
       throw createError(400, 'Alcohol content is required');
     }

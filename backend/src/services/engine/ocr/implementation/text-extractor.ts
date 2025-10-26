@@ -14,8 +14,17 @@ export class TextExtractor implements ITextExtractor {
   }
 
   async extract(buffer: Buffer): Promise<ExtractedText> {
-    // Preprocess the image for better OCR results
+    const sharp = (await import('sharp')).default;
+    const originalMetadata = await sharp(buffer).metadata();
+    const originalWidth = originalMetadata.width || 0;
+    const originalHeight = originalMetadata.height || 0;
+
     const processedBuffer = await this.preprocessor.preprocessForOCR(buffer);
+
+    const processedMetadata = await sharp(processedBuffer).metadata();
+    const processedWidth = processedMetadata.width || 0;
+    const processedHeight = processedMetadata.height || 0;
+
     const worker = await createWorker(config.ocr.language);
 
     try {
@@ -31,29 +40,16 @@ export class TextExtractor implements ITextExtractor {
       // Enable blocks output to get word-level bounding boxes (required in v6+)
       const { data } = await worker.recognize(processedBuffer, {}, { blocks: true });
 
-      // Check if any text was extracted
       if (!data.text || data.text.trim().length === 0) {
         throw createError(422, 'No text could be extracted from the image. Please ensure the image is clear, well-lit, and contains readable text.');
       }
 
-      // Check minimum text length
       if (data.text.trim().length < config.ocr.minTextLength) {
         throw createError(422, `Insufficient text extracted from image (${data.text.trim().length} characters). The image may be too blurry, too small, or poorly lit. Please upload a higher quality image with clearly visible text.`);
       }
 
-      // Check OCR confidence
       if (data.confidence < config.ocr.minConfidence) {
         throw createError(422, `Image quality too low for accurate text recognition (confidence: ${data.confidence.toFixed(1)}%). Please upload a clearer, higher resolution image with better lighting and focus. Tips: Ensure the label is well-lit, in focus, and fills most of the frame.`);
-      }
-
-      const normalized = this.normalizeText(data.text);
-
-      // Additional check: warn if confidence is moderate
-      if (data.confidence < config.ocr.warningConfidenceThreshold) {
-        console.warn(
-          `OCR confidence is moderate (${data.confidence.toFixed(1)}%). ` +
-          'Results may not be fully accurate. Consider using a higher quality image.'
-        );
       }
 
       // Extract word-level bounding boxes from blocks structure (Tesseract v6+)
@@ -72,11 +68,46 @@ export class TextExtractor implements ITextExtractor {
           confidence: word.confidence,
         })) || [];
 
+      // Reconstruct text from blocks structure, preserving line breaks and filtering junk
+      let reconstructedText = '';
+      if (data.blocks) {
+        for (const block of data.blocks) {
+          for (const paragraph of block.paragraphs || []) {
+            for (const line of paragraph.lines || []) {
+              const lineWords = (line.words || [])
+                .filter((word: any) => {
+                  // Filter out very low confidence words and single characters (likely OCR noise)
+                  if (word.confidence < 30) return false;
+                  if (word.text.length === 1 && word.confidence < 70) return false;
+                  return true;
+                })
+                .map((word: any) => word.text);
+
+              if (lineWords.length > 0) {
+                reconstructedText += lineWords.join(' ') + '\n';
+              }
+            }
+            reconstructedText += '\n'; // Extra line break between paragraphs
+          }
+        }
+      }
+
+      // Use Tesseract's original text as base, supplement with reconstructed if longer/better
+      const finalText = reconstructedText.trim().length > data.text.trim().length
+        ? reconstructedText.trim()
+        : data.text;
+      const normalizedFinal = this.normalizeText(finalText);
+
       return {
-        raw: data.text,
-        normalized,
+        raw: finalText,
+        normalized: normalizedFinal,
         confidence: data.confidence,
         words,
+        imageDimensions: {
+          original: { width: originalWidth, height: originalHeight },
+          processed: { width: processedWidth, height: processedHeight },
+        },
+        processedImageBuffer: processedBuffer, // Return preprocessed image for admin display
       };
     } catch (error) {
       if (createError.isHttpError(error)) {

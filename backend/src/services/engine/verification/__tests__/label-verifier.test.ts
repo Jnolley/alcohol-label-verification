@@ -11,7 +11,6 @@ describe('LabelVerifier', () => {
 
   beforeEach(() => {
     mockNormalizer = {
-      normalizeAbv: jest.fn(),
       normalizeVolume: jest.fn((text: string) => {
         // Simple string-based extraction matching real normalizer behavior
         const upper = text.toUpperCase();

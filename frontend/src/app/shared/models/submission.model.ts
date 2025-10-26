@@ -27,6 +27,10 @@ export interface ExtractedText {
   normalized: string;
   confidence: number;
   words: DetectedWord[];
+  imageDimensions?: {
+    original: { width: number; height: number };
+    processed: { width: number; height: number };
+  };
 }
 
 export interface Submission {

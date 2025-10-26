@@ -4,12 +4,11 @@ import { IImagePreprocessor } from '../interface/image-preprocessor.interface';
 export class ImagePreprocessor implements IImagePreprocessor {
   async preprocessForOCR(buffer: Buffer): Promise<Buffer> {
     try {
-      // Get image metadata to understand dimensions
       const metadata = await sharp(buffer).metadata();
       const width = metadata.width || 0;
       const height = metadata.height || 0;
+      const hasAlpha = metadata.channels === 4;
 
-      // Calculate if we need to resize (ensure minimum resolution for OCR)
       const minDimension = 1000;
       let resizeWidth: number | undefined;
       let resizeHeight: number | undefined;
@@ -21,10 +20,13 @@ export class ImagePreprocessor implements IImagePreprocessor {
         resizeHeight = Math.round(height * scale);
       }
 
-      // Process the image for optimal OCR
       let pipeline = sharp(buffer);
 
-      // Resize if needed
+      // Handle transparent backgrounds - flatten to white
+      if (hasAlpha) {
+        pipeline = pipeline.flatten({ background: { r: 255, g: 255, b: 255 } });
+      }
+
       if (resizeWidth && resizeHeight) {
         pipeline = pipeline.resize(resizeWidth, resizeHeight, {
           kernel: sharp.kernel.lanczos3,
@@ -32,12 +34,17 @@ export class ImagePreprocessor implements IImagePreprocessor {
         });
       }
 
-      // Apply adaptive thresholding pipeline for better OCR
-      // This approach handles shadows better than contrast/sharpening
-      const processed = await pipeline
-        .greyscale() // Convert to grayscale
-        .normalise() // Normalize to spread histogram (auto-adjusts for local contrast)
-        .threshold(128, { greyscale: false }) // Binary threshold - converts to pure B&W
+      // Apply minimal preprocessing to preserve quality
+      // Only normalize contrast - let Tesseract handle the rest
+      let finalPipeline = pipeline.normalise(); // Normalize to spread histogram (auto-adjusts for local contrast)
+
+      // Output as high-quality PNG to preserve quality for OCR
+      // Always use PNG regardless of input format to avoid lossy compression
+      const processed = await finalPipeline
+        .png({
+          compressionLevel: 0, // No compression
+          quality: 100,
+        })
         .toBuffer();
 
       return processed;

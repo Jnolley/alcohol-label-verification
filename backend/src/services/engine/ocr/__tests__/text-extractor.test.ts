@@ -2,6 +2,7 @@ import { TextExtractor } from '../implementation/text-extractor';
 import { createWorker, PSM } from 'tesseract.js';
 import createError from 'http-errors';
 import config from '../../../../config';
+import { IImagePreprocessor } from '../../../utility/image-processing/interface/image-preprocessor.interface';
 
 // Mock tesseract.js
 jest.mock('tesseract.js');
@@ -9,6 +10,7 @@ jest.mock('tesseract.js');
 describe('TextExtractor', () => {
   let extractor: TextExtractor;
   let mockWorker: any;
+  let mockPreprocessor: jest.Mocked<IImagePreprocessor>;
 
   beforeEach(() => {
     mockWorker = {
@@ -19,7 +21,12 @@ describe('TextExtractor', () => {
 
     (createWorker as jest.Mock).mockResolvedValue(mockWorker);
 
-    extractor = new TextExtractor();
+    // Mock the image preprocessor to just return the buffer unchanged
+    mockPreprocessor = {
+      preprocessForOCR: jest.fn().mockImplementation((buffer) => Promise.resolve(buffer)),
+    } as jest.Mocked<IImagePreprocessor>;
+
+    extractor = new TextExtractor(mockPreprocessor);
   });
 
   afterEach(() => {
@@ -32,24 +39,28 @@ describe('TextExtractor', () => {
       const mockOCRData = {
         text: 'OLD TOM DISTILLERY KENTUCKY BOURBON 45% 750ML',
         confidence: 95,
+        blocks: [],
       };
 
       mockWorker.recognize.mockResolvedValue({ data: mockOCRData });
 
       const result = await extractor.extract(buffer);
 
+      expect(mockPreprocessor.preprocessForOCR).toHaveBeenCalledWith(buffer);
       expect(createWorker).toHaveBeenCalledWith(config.ocr.language);
       expect(mockWorker.setParameters).toHaveBeenCalledWith({
-        tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
+        tessedit_pageseg_mode: PSM.SPARSE_TEXT,
+        tessedit_ocr_engine_mode: '1',
         preserve_interword_spaces: '1',
       });
-      expect(mockWorker.recognize).toHaveBeenCalledWith(buffer);
+      expect(mockWorker.recognize).toHaveBeenCalledWith(buffer, {}, { blocks: true });
       expect(mockWorker.terminate).toHaveBeenCalled();
 
       expect(result).toEqual({
         raw: mockOCRData.text,
         normalized: 'OLD TOM DISTILLERY KENTUCKY BOURBON 45% 750ML',
         confidence: 95,
+        words: [],
       });
     });
 
@@ -58,6 +69,7 @@ describe('TextExtractor', () => {
       const mockOCRData = {
         text: '  old   tom    distillery   bourbon  ',
         confidence: 92,
+        blocks: [],
       };
 
       mockWorker.recognize.mockResolvedValue({ data: mockOCRData });
@@ -70,7 +82,7 @@ describe('TextExtractor', () => {
 
     it('should throw error when no text is extracted', async () => {
       const buffer = Buffer.from('fake-image-data');
-      mockWorker.recognize.mockResolvedValue({ data: { text: '', confidence: 90 } });
+      mockWorker.recognize.mockResolvedValue({ data: { text: '', confidence: 90, blocks: [] } });
 
       await expect(extractor.extract(buffer)).rejects.toThrow(
         'No text could be extracted from the image'
@@ -81,7 +93,7 @@ describe('TextExtractor', () => {
 
     it('should throw error when extracted text is only whitespace', async () => {
       const buffer = Buffer.from('fake-image-data');
-      mockWorker.recognize.mockResolvedValue({ data: { text: '   ', confidence: 90 } });
+      mockWorker.recognize.mockResolvedValue({ data: { text: '   ', confidence: 90, blocks: [] } });
 
       await expect(extractor.extract(buffer)).rejects.toThrow(
         'No text could be extracted from the image'
@@ -93,7 +105,7 @@ describe('TextExtractor', () => {
     it('should throw error when text length is below minimum', async () => {
       const buffer = Buffer.from('fake-image-data');
       const shortText = 'AB'; // Less than minTextLength
-      mockWorker.recognize.mockResolvedValue({ data: { text: shortText, confidence: 90 } });
+      mockWorker.recognize.mockResolvedValue({ data: { text: shortText, confidence: 90, blocks: [] } });
 
       await expect(extractor.extract(buffer)).rejects.toThrow('Insufficient text extracted');
 
@@ -104,46 +116,12 @@ describe('TextExtractor', () => {
       const buffer = Buffer.from('fake-image-data');
       const lowConfidence = config.ocr.minConfidence - 10;
       mockWorker.recognize.mockResolvedValue({
-        data: { text: 'Some text here that is long enough', confidence: lowConfidence },
+        data: { text: 'Some text here that is long enough', confidence: lowConfidence, blocks: [] },
       });
 
       await expect(extractor.extract(buffer)).rejects.toThrow('Image quality too low');
 
       expect(mockWorker.terminate).toHaveBeenCalled();
-    });
-
-    it('should warn when confidence is moderate but above minimum', async () => {
-      const buffer = Buffer.from('fake-image-data');
-      const moderateConfidence = config.ocr.warningConfidenceThreshold - 5;
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
-
-      mockWorker.recognize.mockResolvedValue({
-        data: { text: 'Some text here that is long enough', confidence: moderateConfidence },
-      });
-
-      await extractor.extract(buffer);
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('OCR confidence is moderate')
-      );
-
-      consoleWarnSpy.mockRestore();
-    });
-
-    it('should not warn when confidence is high', async () => {
-      const buffer = Buffer.from('fake-image-data');
-      const highConfidence = config.ocr.warningConfidenceThreshold + 10;
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
-
-      mockWorker.recognize.mockResolvedValue({
-        data: { text: 'Some text here that is long enough', confidence: highConfidence },
-      });
-
-      await extractor.extract(buffer);
-
-      expect(consoleWarnSpy).not.toHaveBeenCalled();
-
-      consoleWarnSpy.mockRestore();
     });
 
     it('should handle OCR processing errors gracefully', async () => {
@@ -168,7 +146,7 @@ describe('TextExtractor', () => {
     it('should terminate worker even when extraction succeeds', async () => {
       const buffer = Buffer.from('fake-image-data');
       mockWorker.recognize.mockResolvedValue({
-        data: { text: 'Valid text content here', confidence: 95 },
+        data: { text: 'Valid text content here', confidence: 95, blocks: [] },
       });
 
       await extractor.extract(buffer);
@@ -189,7 +167,7 @@ describe('TextExtractor', () => {
       const buffer = Buffer.from('fake-image-data');
       const messyText = '  Old   TOM  \n  DISTILLERY  \t  Bourbon  \n  ';
       mockWorker.recognize.mockResolvedValue({
-        data: { text: messyText, confidence: 92 },
+        data: { text: messyText, confidence: 92, blocks: [] },
       });
 
       const result = await extractor.extract(buffer);
@@ -204,7 +182,7 @@ describe('TextExtractor', () => {
       const buffer = Buffer.from('fake-image-data');
       const minText = 'A'.repeat(config.ocr.minTextLength);
       mockWorker.recognize.mockResolvedValue({
-        data: { text: minText, confidence: 95 },
+        data: { text: minText, confidence: 95, blocks: [] },
       });
 
       const result = await extractor.extract(buffer);
@@ -216,7 +194,7 @@ describe('TextExtractor', () => {
     it('should handle confidence exactly at minimum threshold', async () => {
       const buffer = Buffer.from('fake-image-data');
       mockWorker.recognize.mockResolvedValue({
-        data: { text: 'Valid text content here', confidence: config.ocr.minConfidence },
+        data: { text: 'Valid text content here', confidence: config.ocr.minConfidence, blocks: [] },
       });
 
       const result = await extractor.extract(buffer);

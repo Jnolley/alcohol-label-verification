@@ -6,8 +6,6 @@ import { IFieldValidator } from '../../../validation/field-validation/interface/
 import { IImageValidator } from '../../../utility/image-processing/interface/image-validator.interface';
 import { ITextExtractor } from '../../../engine/ocr/interface/text-extractor.interface';
 import { ILabelVerifier } from '../../../engine/verification/interface/label-verifier.interface';
-import { ILogger } from '../../../utility/logging/interface/logger.interface';
-import config from '../../../../config';
 
 export interface ExtendedVerificationResult {
   result: VerificationResult;
@@ -19,8 +17,7 @@ export class VerificationManager implements IVerificationManager {
     private readonly fieldValidator: IFieldValidator,
     private readonly imageValidator: IImageValidator,
     private readonly textExtractor: ITextExtractor,
-    private readonly labelVerifier: ILabelVerifier,
-    private readonly logger: ILogger
+    private readonly labelVerifier: ILabelVerifier
   ) {}
 
   async processVerification(
@@ -28,16 +25,12 @@ export class VerificationManager implements IVerificationManager {
     imageBuffer: Buffer,
     filename: string
   ): Promise<VerificationResult> {
-    // Step 1: Validate form fields
     this.fieldValidator.validate(formData);
 
-    // Step 2: Validate image file
     await this.imageValidator.validate(imageBuffer, filename);
 
-    // Step 3: Extract text from image
     const extractedText = await this.textExtractor.extract(imageBuffer);
 
-    // Step 4: Verify fields against extracted text
     const result = this.labelVerifier.verify(formData, extractedText);
 
     return result;
@@ -51,16 +44,12 @@ export class VerificationManager implements IVerificationManager {
     imageBuffer: Buffer,
     filename: string
   ): Promise<ExtendedVerificationResult> {
-    // Step 1: Validate form fields
     this.fieldValidator.validate(formData);
 
-    // Step 2: Validate image file
     await this.imageValidator.validate(imageBuffer, filename);
 
-    // Step 3: Extract text from image
     const ocrData = await this.textExtractor.extract(imageBuffer);
 
-    // Step 4: Verify fields against extracted text
     const result = this.labelVerifier.verify(formData, ocrData);
 
     return {

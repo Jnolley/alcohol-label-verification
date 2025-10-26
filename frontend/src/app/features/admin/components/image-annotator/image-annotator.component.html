@@ -19,8 +19,8 @@
         <span>Mismatch</span>
       </div>
       <div class="flex items-center gap-2">
-        <div class="w-4 h-4 border-2 rounded" style="border-color: rgba(156, 163, 175, 0.6);"></div>
-        <span>Unmatched</span>
+        <div class="w-4 h-4 border-2 rounded" style="border-color: #06b6d4;"></div>
+        <span>Other Text</span>
       </div>
     </div>
   </div>
@@ -42,7 +42,7 @@
         [style.top.px]="tooltip()!.y + 10"
       >
         <div class="font-semibold">{{ tooltip()!.text }}</div>
-        <div class="text-gray-300">Confidence: {{ (tooltip()!.confidence * 100).toFixed(1) }}%</div>
+        <div class="text-gray-300">Confidence: {{ tooltip()!.confidence.toFixed(1) }}%</div>
         @if (tooltip()!.fieldType) {
           <div class="text-gray-300">Field: {{ tooltip()!.fieldType }}</div>
         }

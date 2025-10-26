@@ -16,4 +16,9 @@ export interface ExtractedText {
   normalized: string;
   confidence: number;
   words: DetectedWord[];
+  imageDimensions?: {
+    original: { width: number; height: number };
+    processed: { width: number; height: number };
+  };
+  processedImageBuffer?: Buffer; // The preprocessed image that OCR actually processed
 }
