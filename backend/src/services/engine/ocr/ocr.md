@@ -53,7 +53,6 @@ From `config.ts`:
 - `ocr.language` - Tesseract language
 - `ocr.minTextLength` - Minimum extracted text length
 - `ocr.minConfidence` - Minimum OCR confidence threshold
-- `ocr.warningConfidenceThreshold` - Warning threshold
 
 ## Errors
 
