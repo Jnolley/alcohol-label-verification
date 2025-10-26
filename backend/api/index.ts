@@ -45,4 +45,17 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error('Error details:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method
+  });
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+    status: err.status || 500
+  });
+});
+
 export default app;
