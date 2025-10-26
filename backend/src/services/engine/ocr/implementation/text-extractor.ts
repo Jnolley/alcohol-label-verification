@@ -34,10 +34,8 @@ export class TextExtractor implements ITextExtractor {
     try {
       // Set Tesseract parameters optimized for bottle labels
       // PSM 11: Sparse text - finds scattered text without assuming order (best for product labels)
-      // OEM 1: LSTM Neural Net mode (most accurate for modern use)
       await worker.setParameters({
         tessedit_pageseg_mode: PSM.SPARSE_TEXT,
-        tessedit_ocr_engine_mode: '1', // LSTM only
         preserve_interword_spaces: '1',
       });
 
