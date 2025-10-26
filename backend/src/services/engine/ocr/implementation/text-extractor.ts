@@ -25,7 +25,11 @@ export class TextExtractor implements ITextExtractor {
     const processedWidth = processedMetadata.width || 0;
     const processedHeight = processedMetadata.height || 0;
 
-    const worker = await createWorker(config.ocr.language);
+    const worker = await createWorker(config.ocr.language, 1, {
+      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5',
+      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/worker.min.js',
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+    });
 
     try {
       // Set Tesseract parameters optimized for bottle labels
