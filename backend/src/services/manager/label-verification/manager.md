@@ -44,7 +44,6 @@ Dependencies are injected in order:
 2. ImageValidator
 3. TextExtractor
 4. LabelVerifier
-5. ConsoleLogger
 
 See app.ts for dependency wiring.
 

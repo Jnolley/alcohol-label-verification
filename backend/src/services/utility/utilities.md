@@ -61,20 +61,3 @@ Text and volume normalization utilities.
 - `convertToMilliliters()` - Convert volume units to ml
 
 See [verification.md](../engine/verification/verification.md) for volume normalization details.
-
----
-
-### Console Logger
-Structured logging to console.
-
-**Methods**:
-- `info(message, meta?)` - Info level
-- `warn(message, meta?)` - Warning level
-- `error(message, error?, meta?)` - Error level
-- `debug(message, meta?)` - Debug level
-
-**Configuration**:
-- `logging.enabled` - Enable/disable logging
-- `logging.level` - Minimum log level (debug, info, warn, error)
-
-Outputs JSON-formatted logs with timestamps.
