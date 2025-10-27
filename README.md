@@ -72,6 +72,23 @@ Users upload one or two alcohol label images (primary and optional secondary) an
    - Download the JSON file (e.g., `my-project-vision-api-key.json`)
    - **Save this file** - You'll need it in the next step
 
+**JSON Key Format Example:**
+The downloaded credentials file should look similar to this:
+```json
+{
+  "type": "service_account",
+  "project_id": "your-project-id",
+  "private_key_id": "abc123...",
+  "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+  "client_email": "service-account@your-project.iam.gserviceaccount.com",
+  "client_id": "123456789",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/..."
+}
+```
+
 **Note for Evaluators**: If you need credentials to test this application, please request them separately or use your own Google Cloud account (free tier includes 1,000 Vision API requests/month).
 
 ### Backend Setup
