@@ -15,6 +15,7 @@ import { MatchStatus } from '../../../../shared/enums/match-status.enum';
 })
 export class SubmissionDetailComponent implements OnInit {
   submission = signal<Submission | null>(null);
+  loading = signal(true);
   adminNotes = '';
   isSubmitting = signal(false);
   error = signal<string | null>(null);
@@ -37,13 +38,18 @@ export class SubmissionDetailComponent implements OnInit {
   }
 
   private loadSubmission(id: string): void {
+    this.loading.set(true);
+    this.error.set(null);
+
     this.adminService.getSubmission(id).subscribe({
       next: (response) => {
         this.submission.set(response.submission);
         this.adminNotes = response.submission.adminNotes || '';
+        this.loading.set(false);
       },
       error: (err: Error) => {
         this.error.set('Failed to load submission');
+        this.loading.set(false);
       }
     });
   }

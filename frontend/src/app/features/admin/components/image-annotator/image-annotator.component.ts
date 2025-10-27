@@ -43,6 +43,7 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
 
   showAnnotations = signal(true);
   tooltip = signal<TooltipData | null>(null);
+  loading = signal(true);
 
   private ctx: CanvasRenderingContext2D | null = null;
   private image: HTMLImageElement | null = null;
@@ -69,14 +70,17 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
 
   private initCanvas(): void {
     if (!this.imageBase64 || !this.ocrData || !this.verificationResult) {
+      this.loading.set(false);
       return;
     }
 
+    this.loading.set(true);
     const canvas = this.canvasRef.nativeElement;
     this.ctx = canvas.getContext('2d');
 
     if (!this.ctx) {
       this.toastService.showError('Failed to initialize canvas context');
+      this.loading.set(false);
       return;
     }
 
@@ -85,9 +89,11 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
       this.setupCanvas();
       this.annotateWords();
       this.render();
+      this.loading.set(false);
     };
     this.image.onerror = () => {
       this.toastService.showError('Failed to load label image');
+      this.loading.set(false);
     };
     this.image.src = `data:image/png;base64,${this.imageBase64}`;
   }

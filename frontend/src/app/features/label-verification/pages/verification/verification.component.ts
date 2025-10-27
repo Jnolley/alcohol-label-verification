@@ -18,6 +18,7 @@ import { LabelFormData } from '../../../../shared/models/label-form-data.model';
 export class VerificationComponent {
   store = inject(VerificationStore);
   formComponent = viewChild(LabelFormComponent);
+  imageComponent = viewChild(ImageUploadComponent);
 
   showModal = false;
 
@@ -36,7 +37,14 @@ export class VerificationComponent {
   }
 
   onReset(): void {
-    this.formComponent()?.form.reset();
+    this.formComponent()?.form.reset({
+      brandName: '',
+      productType: '',
+      alcoholContent: '',
+      netContentsValue: '',
+      netContentsUnit: 'ml'
+    });
+    this.imageComponent()?.clearSelection();
     this.store.reset();
     this.showModal = false;
   }
