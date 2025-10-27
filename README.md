@@ -15,6 +15,12 @@ Users upload one or two alcohol label images (primary and optional secondary) an
 
 ---
 
+## Demo Video
+
+**🎥 [DEMO.mp4](DEMO.mp4)** - Watch a complete walkthrough of the label verification system in action, including both the user submission flow and admin review dashboard.
+
+---
+
 ## Tech Stack
 
 **Frontend:** Angular 19 + TailwindCSS + TypeScript
