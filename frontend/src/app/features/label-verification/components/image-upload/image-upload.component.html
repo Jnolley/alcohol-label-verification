@@ -1,4 +1,9 @@
-<div class="space-y-4" data-cy="image-upload">
+<div
+  class="space-y-4"
+  data-cy="image-upload"
+  (dragover)="$event.preventDefault()"
+  (drop)="$event.preventDefault()"
+>
   <div>
     <label class="block text-sm font-medium text-gray-900 mb-1.5">
       Label Image <span class="text-error">*</span>
@@ -20,7 +25,11 @@
     @if (!selectedFile()) {
       <label
         for="file-upload"
-        class="block w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded text-center cursor-pointer hover:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary"
+        (dragenter)="onDragOver($event)"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        [class]="'block w-full px-4 py-3 border-2 border-dashed rounded text-center cursor-pointer focus-within:outline-none focus-within:ring-2 focus-within:ring-primary transition-colors ' + (isDragging() ? 'border-primary bg-blue-50' : 'border-gray-300 hover:border-primary')"
       >
         <div class="space-y-1">
           <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">

@@ -261,16 +261,19 @@ All verification thresholds are in `backend/src/config.ts`:
 
 ## Assumptions
 
-1. **Image Quality**: Labels are photographed clearly with good lighting and minimal glare
-2. **Text Readability**: Text on labels are readable
-3. **Language**: All labels are in English
-4. **Label Format**: Standard TTB-compliant label format (not highly decorative/artistic)
-5. **Government Warning**: Exact TTB warning text is used (not paraphrased or abbreviated)
-6. **Net Contents**: Uses standard units (ml, cl, L, fl oz, gal) without automatic conversion
-7. **Alcohol Content**: Displayed as percentage with "%" symbol or "Alc./Vol." notation
-8. **Case Insensitivity**: Verification ignores case differences (BOURBON matches bourbon)
-9. **Punctuation Tolerance**: Minor punctuation differences are ignored (Jack Daniels matches Jack Daniel's)
-10. **Single Label**: Each submission contains one label image (front face only)
+1. **Image Type**: User uploads a photograph/image of an alcohol bottle label (not other document types)
+2. **Single Photo**: All required fields (brand, type, ABV, warning, net contents) are visible in one photo/label image
+3. **Image Quality**: Labels are photographed clearly with good lighting and minimal glare
+4. **Text Readability**: Text on labels are readable by OCR
+5. **Language**: All labels are in English
+6. **Label Format**: Standard TTB-compliant label format (not highly decorative/artistic fonts)
+7. **Government Warning**: Exact TTB warning text is used (not paraphrased or abbreviated)
+8. **Net Contents**: Uses standard units (ml, cl, L, fl oz, gal) without automatic conversion
+9. **Alcohol Content**: Displayed as percentage with "%" symbol or "Alc./Vol." notation
+10. **Case Insensitivity**: Verification ignores case differences (BOURBON matches bourbon)
+11. **Punctuation Tolerance**: Minor punctuation differences are ignored (Jack Daniels matches Jack Daniel's)
+12. **Text-Based Matching**: OCR extracts all text into one blob; verification searches the entire text for each field using pattern matching (no position/location awareness)
+13. **Unique Field Values**: Each field has unique text on the label (e.g., if "40%" appears twice, the first match is used)
 
 ## Limitations
 

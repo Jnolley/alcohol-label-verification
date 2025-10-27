@@ -13,6 +13,7 @@ export class ImageUploadComponent {
   selectedFile = signal<File | null>(null);
   previewUrl = signal<string | null>(null);
   error = signal<string | null>(null);
+  isDragging = signal<boolean>(false);
 
   readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
@@ -26,6 +27,39 @@ export class ImageUploadComponent {
       return;
     }
 
+    this.processFile(file);
+  }
+
+  clearSelection(): void {
+    this.selectedFile.set(null);
+    this.previewUrl.set(null);
+    this.error.set(null);
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(true);
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+
+    const file = event.dataTransfer?.files?.[0];
+    if (file) {
+      this.processFile(file);
+    }
+  }
+
+  private processFile(file: File): void {
     if (!this.ALLOWED_TYPES.includes(file.type)) {
       this.error.set('Please select a valid image file (JPEG, PNG, or WebP)');
       this.clearSelection();
@@ -39,7 +73,6 @@ export class ImageUploadComponent {
     }
 
     this.error.set(null);
-
     this.selectedFile.set(file);
 
     const reader = new FileReader();
@@ -49,12 +82,6 @@ export class ImageUploadComponent {
     reader.readAsDataURL(file);
 
     this.fileSelected.emit(file);
-  }
-
-  clearSelection(): void {
-    this.selectedFile.set(null);
-    this.previewUrl.set(null);
-    this.error.set(null);
   }
 
   formatFileSize(bytes: number): string {
