@@ -53,9 +53,25 @@ export class ImageUploadComponent {
     event.stopPropagation();
     this.isDragging.set(false);
 
+    // Try getting file from files first (local file drops)
     const file = event.dataTransfer?.files?.[0];
     if (file) {
       this.processFile(file);
+      return;
+    }
+
+    // Handle drops from browser windows/other sources
+    const items = event.dataTransfer?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].kind === 'file') {
+          const droppedFile = items[i].getAsFile();
+          if (droppedFile) {
+            this.processFile(droppedFile);
+            return;
+          }
+        }
+      }
     }
   }
 
