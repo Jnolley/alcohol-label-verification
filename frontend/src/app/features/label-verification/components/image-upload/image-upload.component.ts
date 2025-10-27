@@ -48,7 +48,7 @@ export class ImageUploadComponent {
     this.isDragging.set(false);
   }
 
-  onDrop(event: DragEvent): void {
+  async onDrop(event: DragEvent): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
     this.isDragging.set(false);
@@ -60,18 +60,58 @@ export class ImageUploadComponent {
       return;
     }
 
-    // Handle drops from browser windows/other sources
+    // Handle drops from browser windows/other sources using items API
     const items = event.dataTransfer?.items;
     if (items) {
       for (let i = 0; i < items.length; i++) {
-        if (items[i].kind === 'file') {
-          const droppedFile = items[i].getAsFile();
+        const item = items[i];
+
+        // Try to get as file first
+        if (item.kind === 'file') {
+          const droppedFile = item.getAsFile();
           if (droppedFile) {
             this.processFile(droppedFile);
             return;
           }
         }
+
+        // If it's a string (URL), fetch the image
+        if (item.kind === 'string' && item.type.match('^text/uri-list')) {
+          item.getAsString(async (url) => {
+            try {
+              await this.fetchAndProcessImage(url);
+            } catch (error) {
+              this.error.set('Failed to load image from URL');
+            }
+          });
+          return;
+        }
       }
+    }
+
+    // Fallback: try to get URL from getData
+    const url = event.dataTransfer?.getData('text/uri-list') || event.dataTransfer?.getData('text/html');
+    if (url) {
+      try {
+        await this.fetchAndProcessImage(url);
+      } catch (error) {
+        this.error.set('Failed to load image from URL');
+      }
+    }
+  }
+
+  private async fetchAndProcessImage(url: string): Promise<void> {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+
+      // Convert blob to File
+      const fileName = url.split('/').pop() || 'image.jpg';
+      const file = new File([blob], fileName, { type: blob.type });
+
+      this.processFile(file);
+    } catch (error) {
+      throw new Error('Failed to fetch image');
     }
   }
 
