@@ -1,6 +1,8 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist/frontend/browser",
+  "installCommand": "npm install",
+  "framework": "angular",
   "rewrites": [
     {
       "source": "/(.*)",
