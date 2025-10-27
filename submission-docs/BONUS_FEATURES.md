@@ -1,4 +1,4 @@
-h# Bonus Features Implementation
+# Bonus Features Implementation
 
 This document describes the additional features implemented beyond the core requirements, explaining the rationale and implementation details.
 
@@ -255,7 +255,7 @@ const mockExtractor: ITextExtractor = {
 ## 7. Professional UI with Loading States and Error Handling
 
 ### Implementation
-Polished Angular application with loading indicators, error messages, toast notifications, and responsive design using TailwindCSS.
+Polished Angular application with comprehensive state management, loading indicators, error messages, toast notifications, and responsive design using TailwindCSS.
 
 ### Why It Was Added
 Users expect professional applications to:
@@ -266,34 +266,74 @@ Users expect professional applications to:
 
 ### Key Features
 
+**Comprehensive State Management:**
+All components with async operations implement a consistent state management pattern using Angular signals:
+
+- **Login Component** - Loading and error states during authentication
+- **Dashboard Component** - Loading spinner while fetching submission list
+- **Submission Detail Component** - Loading state while fetching individual submission data
+- **Image Annotator Component** - Loading state while image loads and processes
+- **Verification Store** - Loading state during OCR processing
+
+**Consistent State Pattern:**
+```typescript
+loading = signal(true);        // Tracks async progress
+error = signal<string | null>(null);  // User-friendly errors
+
+// Before async operation
+this.loading.set(true);
+this.error.set(null);
+
+// On success
+this.loading.set(false);
+
+// On error
+this.loading.set(false);
+this.error.set('Descriptive error message');
+```
+
 **Loading States:**
-- Spinner animation during OCR processing
-- Disabled buttons while submitting
-- Progress text: "Analyzing label..."
+- Unified spinner animation across all components
+- Disabled buttons while submitting with "Processing..." text
+- Consistent Tailwind styling: `border-primary` for spinners, `bg-primary` for buttons
+- Prevents layout shifts with min-height during loading
+- Progress feedback: "Logging in...", "Loading submissions...", "Loading image..."
 
 **Error Handling:**
-- Field-level validation with red borders and messages
-- API error toast notifications
-- Network error recovery
-- User-friendly error descriptions
+- Field-level validation with red borders and inline messages
+- API error toast notifications for non-blocking errors
+- Error state blocks for critical failures (e.g., failed to load data)
+- Network error recovery with retry options
+- User-friendly error descriptions instead of technical messages
 
 **Responsive Design:**
 - Mobile-first TailwindCSS approach
 - Breakpoints for tablet and desktop
 - Touch-friendly buttons and inputs
-- Image upload preview
+- Drag-and-drop image upload with visual feedback
+- Image upload preview with file size display
 
 **Accessibility:**
 - ARIA labels on interactive elements
 - Keyboard navigation support
 - Color contrast compliance (WCAG AA)
-- Screen reader friendly
+- Screen reader friendly error messages
+- Focus management during state transitions
+
+**Visual Consistency:**
+- Unified color palette: `primary` (#2563eb), `success` (#16a34a), `error` (#dc2626)
+- Consistent button styles and hover states
+- Standardized spacing and typography
+- Smooth transitions and animations
 
 ### Value Added
 - Professional appearance builds user trust
+- Predictable UX across all async operations
 - Clear error messages help users fix problems
+- No jarring layout shifts during loading
 - Mobile support enables on-the-go label photography
 - Accessible to users with disabilities
+- Consistent visual language reduces cognitive load
 
 ## Summary
 

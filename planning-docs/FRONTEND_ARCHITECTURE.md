@@ -104,6 +104,89 @@ src/
 - canSubmit (derived from formData + imageFile)
 - hasResults (derived from verificationResult)
 
+### Component State Management Pattern
+
+All components with async operations follow a consistent state management pattern using Angular signals:
+
+**Loading States:**
+- `loading = signal(true)` - Tracks async operation progress
+- Set to `true` before API calls
+- Set to `false` on success or error
+- Controls loading spinner visibility
+
+**Error States:**
+- `error = signal<string | null>(null)` - User-friendly error messages
+- Reset to `null` before new operations
+- Set with descriptive message on failure
+- Displayed in error UI blocks
+
+**Implementation Examples:**
+
+**Login Component:**
+```typescript
+loading = signal(false);
+error = signal<string | null>(null);
+
+onSubmit(): void {
+  this.loading.set(true);
+  this.error.set(null);
+  this.adminService.login(username, password).subscribe({
+    next: () => { this.router.navigate(['/admin/dashboard']); },
+    error: (err) => {
+      this.loading.set(false);
+      this.error.set('Invalid credentials');
+    }
+  });
+}
+```
+
+**Dashboard Component:**
+```typescript
+submissions = signal<Submission[]>([]);
+loading = signal(true);
+error = signal<string | null>(null);
+
+loadSubmissions(): void {
+  this.loading.set(true);
+  this.error.set(null);
+  this.adminService.getSubmissions().subscribe({
+    next: (response) => {
+      this.submissions.set(response.submissions);
+      this.loading.set(false);
+    },
+    error: (err) => {
+      this.loading.set(false);
+      this.error.set('Failed to load submissions');
+    }
+  });
+}
+```
+
+**Image Annotator Component:**
+```typescript
+loading = signal(true);
+
+private initCanvas(): void {
+  this.loading.set(true);
+  this.image.onload = () => {
+    this.setupCanvas();
+    this.annotateWords();
+    this.render();
+    this.loading.set(false);
+  };
+  this.image.onerror = () => {
+    this.toastService.showError('Failed to load image');
+    this.loading.set(false);
+  };
+}
+```
+
+This consistent pattern provides:
+- Predictable state transitions across all components
+- Clear user feedback during async operations
+- Proper error recovery and messaging
+- Unified UX with consistent loading spinners
+
 ---
 
 ## Design Principles

@@ -16,7 +16,7 @@ export class ImageUploadComponent {
   isDragging = signal<boolean>(false);
 
   readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-  readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;

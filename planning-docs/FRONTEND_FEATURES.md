@@ -114,19 +114,34 @@ Display: Inline error messages
 - Spinner or progress indicator
 - Disable form during processing
 - Clear status message
-- Cancel option (optional)
+- Consistent loading states across all async operations
 
 **User Experience:**
 - Button shows "Verifying..." state
 - Form fields disabled during processing
 - Visual spinner or loading animation
 - Clear indication work is in progress
+- Loading spinners during image loading, data fetching, authentication
+
+**Implemented Components:**
+- **Login Component** - Loading spinner during authentication
+- **Dashboard Component** - Loading spinner while fetching submissions
+- **Submission Detail Component** - Loading spinner while loading individual submission
+- **Image Annotator Component** - Loading spinner while image processes and annotates
+- **Verification Store** - Loading state during OCR processing
+
+**Consistent Styling:**
+- All loading spinners use `border-primary` Tailwind class
+- All primary buttons use `bg-primary` with `hover:bg-blue-700`
+- Unified spinner animation: `animate-spin rounded-full h-12 w-12 border-b-2 border-primary`
+- Consistent min-height during loading to prevent layout shifts
 
 **Architecture Mapping:**
 ```
-Feature Layer: Page Container
-State: isSubmitting flag
-Display: Loading UI
+Feature Layer: All Components with Async Operations
+State: loading = signal(true/false)
+Display: Conditional loading UI with @if (loading())
+Pattern: Set true before async, false on complete/error
 ```
 
 ---
