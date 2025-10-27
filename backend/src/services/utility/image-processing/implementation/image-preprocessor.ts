@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import { IImagePreprocessor } from '../interface/image-preprocessor.interface';
+import config from '../../../../config';
 
 export class ImagePreprocessor implements IImagePreprocessor {
   async preprocessForOCR(buffer: Buffer): Promise<Buffer> {
@@ -9,7 +10,7 @@ export class ImagePreprocessor implements IImagePreprocessor {
       const height = metadata.height || 0;
       const hasAlpha = metadata.channels === 4;
 
-      const minDimension = 1000;
+      const minDimension = config.image.minDimensionForOCR;
       let resizeWidth: number | undefined;
       let resizeHeight: number | undefined;
 
@@ -35,10 +36,10 @@ export class ImagePreprocessor implements IImagePreprocessor {
       }
 
       // Apply minimal preprocessing to preserve quality
-      // Only normalize contrast - let Tesseract handle the rest
+      // Only normalize contrast - let Google Cloud Vision handle the rest
       let finalPipeline = pipeline.normalise(); // Normalize to spread histogram (auto-adjusts for local contrast)
 
-      // Output as high-quality PNG to preserve quality for OCR
+      // Output as high-quality to preserve quality for OCR
       // Always use PNG regardless of input format to avoid lossy compression
       const processed = await finalPipeline
         .png({

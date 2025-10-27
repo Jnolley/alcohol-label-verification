@@ -43,7 +43,6 @@ export class SubmissionDetailComponent implements OnInit {
         this.adminNotes = response.submission.adminNotes || '';
       },
       error: (err: Error) => {
-        console.error('Failed to load submission:', err);
         this.error.set('Failed to load submission');
       }
     });

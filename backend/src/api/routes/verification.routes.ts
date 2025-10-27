@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { VerificationController } from '../controllers/verification.controller';
+import config from '../../config';
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: config.image.maxFileSizeBytes,
   },
 });
 

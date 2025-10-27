@@ -18,6 +18,7 @@ describe('VerificationController', () => {
   beforeEach(() => {
     mockVerificationManager = {
       processVerification: jest.fn(),
+      processVerificationExtended: jest.fn(),
     };
 
     controller = new VerificationController(mockVerificationManager);

@@ -1,16 +1,49 @@
-import { createWorker, PSM } from 'tesseract.js';
 import { ITextExtractor } from '../interface/text-extractor.interface';
 import { ExtractedText } from '../contracts/extracted-text';
+import { DetectedWord } from '../contracts/detected-word';
 import createError from 'http-errors';
 import config from '../../../../config';
 import { ImagePreprocessor } from '../../../utility/image-processing/implementation/image-preprocessor';
 import { IImagePreprocessor } from '../../../utility/image-processing/interface/image-preprocessor.interface';
+import { ImageAnnotatorClient } from '@google-cloud/vision';
 
 export class TextExtractor implements ITextExtractor {
   private preprocessor: IImagePreprocessor;
+  private visionClient: ImageAnnotatorClient;
 
   constructor(preprocessor?: IImagePreprocessor) {
     this.preprocessor = preprocessor || new ImagePreprocessor();
+
+    // Support both local (GOOGLE_APPLICATION_CREDENTIALS) and Vercel (JSON in env var)
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+      // Vercel: Parse JSON from environment variable
+      // Fix escaped newlines in private_key field (Vercel often escapes \n as \\n)
+      let credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+
+      try {
+        const credentials = JSON.parse(credentialsJson);
+
+        // Replace literal \n strings with actual newlines in private_key
+        if (credentials.private_key && typeof credentials.private_key === 'string') {
+          credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+        }
+
+        this.visionClient = new ImageAnnotatorClient({ credentials });
+      } catch (error) {
+        throw new Error(
+          `Failed to parse Google Cloud credentials JSON: ${(error as Error).message}\n` +
+          'Make sure GOOGLE_APPLICATION_CREDENTIALS_JSON contains valid JSON'
+        );
+      }
+    } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      this.visionClient = new ImageAnnotatorClient();
+    } else {
+      throw new Error(
+        'Missing Google Cloud credentials. Set either:\n' +
+        '  - GOOGLE_APPLICATION_CREDENTIALS (path to JSON key file) for local dev\n' +
+        '  - GOOGLE_APPLICATION_CREDENTIALS_JSON (JSON string) for Vercel'
+      );
+    }
   }
 
   async extract(buffer: Buffer): Promise<ExtractedText> {
@@ -25,99 +58,96 @@ export class TextExtractor implements ITextExtractor {
     const processedWidth = processedMetadata.width || 0;
     const processedHeight = processedMetadata.height || 0;
 
-    const worker = await createWorker(config.ocr.language, 1, {
-      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5',
-      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/worker.min.js',
-      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
-    });
-
     try {
-      // Set Tesseract parameters optimized for bottle labels
-      // PSM 11: Sparse text - finds scattered text without assuming order (best for product labels)
-      await worker.setParameters({
-        tessedit_pageseg_mode: PSM.SPARSE_TEXT,
-        preserve_interword_spaces: '1',
+      // Use Google Cloud Vision API with official client library
+      const [result] = await this.visionClient.documentTextDetection({
+        image: { content: processedBuffer },
       });
 
-      // Enable blocks output to get word-level bounding boxes (required in v6+)
-      const { data } = await worker.recognize(processedBuffer, {}, { blocks: true });
-
-      if (!data.text || data.text.trim().length === 0) {
+      if (!result.fullTextAnnotation) {
         throw createError(422, 'No text could be extracted from the image. Please ensure the image is clear, well-lit, and contains readable text.');
       }
 
-      if (data.text.trim().length < config.ocr.minTextLength) {
-        throw createError(422, `Insufficient text extracted from image (${data.text.trim().length} characters). The image may be too blurry, too small, or poorly lit. Please upload a higher quality image with clearly visible text.`);
+      const fullText = result.fullTextAnnotation;
+      const extractedText = fullText.text || '';
+
+      if (!extractedText || extractedText.trim().length === 0) {
+        throw createError(422, 'No text could be extracted from the image. Please ensure the image is clear, well-lit, and contains readable text.');
       }
 
-      if (data.confidence < config.ocr.minConfidence) {
-        throw createError(422, `Image quality too low for accurate text recognition (confidence: ${data.confidence.toFixed(1)}%). Please upload a clearer, higher resolution image with better lighting and focus. Tips: Ensure the label is well-lit, in focus, and fills most of the frame.`);
+      if (extractedText.trim().length < config.ocr.minTextLength) {
+        throw createError(422, `Insufficient text extracted from image (${extractedText.trim().length} characters). The image may be too blurry, too small, or poorly lit. Please upload a higher quality image with clearly visible text.`);
       }
 
-      // Extract word-level bounding boxes from blocks structure (Tesseract v6+)
-      const words = (data as any).blocks
-        ?.flatMap((block: any) => block.paragraphs || [])
-        .flatMap((paragraph: any) => paragraph.lines || [])
-        .flatMap((line: any) => line.words || [])
-        .map((word: any) => ({
-          text: word.text,
-          bbox: {
-            x: word.bbox.x0,
-            y: word.bbox.y0,
-            width: word.bbox.x1 - word.bbox.x0,
-            height: word.bbox.y1 - word.bbox.y0,
-          },
-          confidence: word.confidence,
-        })) || [];
+      // Extract word-level data with confidence and bounding boxes
+      const words: DetectedWord[] = [];
+      let totalConfidence = 0;
+      let wordCount = 0;
 
-      // Reconstruct text from blocks structure, preserving line breaks and filtering junk
-      let reconstructedText = '';
-      if (data.blocks) {
-        for (const block of data.blocks) {
-          for (const paragraph of block.paragraphs || []) {
-            for (const line of paragraph.lines || []) {
-              const lineWords = (line.words || [])
-                .filter((word: any) => {
-                  // Filter out very low confidence words and single characters (likely OCR noise)
-                  if (word.confidence < 30) return false;
-                  if (word.text.length === 1 && word.confidence < 70) return false;
-                  return true;
-                })
-                .map((word: any) => word.text);
+      if (fullText.pages && fullText.pages.length > 0) {
+        for (const page of fullText.pages) {
+          for (const block of page.blocks || []) {
+            for (const paragraph of block.paragraphs || []) {
+              for (const word of paragraph.words || []) {
+                const wordText = word.symbols
+                  ?.map((symbol) => symbol.text)
+                  .join('') || '';
 
-              if (lineWords.length > 0) {
-                reconstructedText += lineWords.join(' ') + '\n';
+                const vertices = word.boundingBox?.vertices || [];
+                if (vertices.length === 4 && wordText) {
+                  const x = Math.min(...vertices.map((v) => v.x || 0));
+                  const y = Math.min(...vertices.map((v) => v.y || 0));
+                  const maxX = Math.max(...vertices.map((v) => v.x || 0));
+                  const maxY = Math.max(...vertices.map((v) => v.y || 0));
+
+                  const wordConfidence = word.confidence || 0;
+                  totalConfidence += wordConfidence;
+                  wordCount++;
+
+                  words.push({
+                    text: wordText,
+                    bbox: {
+                      x,
+                      y,
+                      width: maxX - x,
+                      height: maxY - y,
+                    },
+                    confidence: Math.round(wordConfidence * 100), // Convert to percentage
+                  });
+                }
               }
             }
-            reconstructedText += '\n'; // Extra line break between paragraphs
           }
         }
       }
 
-      // Use Tesseract's original text as base, supplement with reconstructed if longer/better
-      const finalText = reconstructedText.trim().length > data.text.trim().length
-        ? reconstructedText.trim()
-        : data.text;
-      const normalizedFinal = this.normalizeText(finalText);
+      // Calculate average confidence (Google returns 0-1, convert to percentage)
+      const avgConfidence = wordCount > 0
+        ? Math.round((totalConfidence / wordCount) * 100)
+        : 85;
+
+      if (avgConfidence < config.ocr.minConfidence) {
+        throw createError(422, `Image quality too low for accurate text recognition (confidence: ${avgConfidence}%). Please upload a clearer, higher resolution image with better lighting and focus.`);
+      }
+
+      const normalizedText = this.normalizeText(extractedText);
 
       return {
-        raw: finalText,
-        normalized: normalizedFinal,
-        confidence: data.confidence,
+        raw: extractedText,
+        normalized: normalizedText,
+        confidence: avgConfidence,
         words,
         imageDimensions: {
           original: { width: originalWidth, height: originalHeight },
           processed: { width: processedWidth, height: processedHeight },
         },
-        processedImageBuffer: processedBuffer, // Return preprocessed image for admin display
+        processedImageBuffer: processedBuffer,
       };
     } catch (error) {
       if (createError.isHttpError(error)) {
         throw error;
       }
       throw createError(422, `OCR processing failed: ${(error as Error).message}`);
-    } finally {
-      await worker.terminate();
     }
   }
 

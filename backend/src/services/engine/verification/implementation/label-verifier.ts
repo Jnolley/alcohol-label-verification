@@ -38,7 +38,13 @@ export class LabelVerifier implements ILabelVerifier {
     const normalizedBrand = this.removePunctuation(brandName.toUpperCase().trim());
     const normalizedExtracted = this.removePunctuation(extractedText);
 
-    if (normalizedExtracted.includes(normalizedBrand)) {
+    // Check for word boundary match (not just substring)
+    // Create regex that matches the brand as complete words
+    const brandWords = normalizedBrand.split(/\s+/);
+    const wordBoundaryPattern = brandWords.map(word => `\\b${this.escapeRegex(word)}\\b`).join('\\s+');
+    const regex = new RegExp(wordBoundaryPattern);
+
+    if (regex.test(normalizedExtracted)) {
       const foundText = this.extractMatchingText(normalizedBrand, extractedText);
       return {
         fieldType: FieldType.BrandName,
@@ -49,17 +55,22 @@ export class LabelVerifier implements ILabelVerifier {
       };
     }
 
+    // Fuzzy matching for OCR errors, but still require reasonable length match
     const score = fuzzball.partial_ratio(normalizedBrand, normalizedExtracted);
 
     if (score >= config.verification.fuzzyMatchThreshold) {
       const foundText = this.extractBestMatch(normalizedBrand, extractedText);
-      return {
-        fieldType: FieldType.BrandName,
-        status: MatchStatus.Match,
-        message: 'Brand name found on label',
-        expected: brandName,
-        found: foundText || `~${brandName}`,
-      };
+
+      // Verify the found text is proportional to the search term (prevent "a" matching everything)
+      if (foundText && foundText.length >= normalizedBrand.length * config.verification.fuzzyMatchMinLength) {
+        return {
+          fieldType: FieldType.BrandName,
+          status: MatchStatus.Match,
+          message: 'Brand name found on label',
+          expected: brandName,
+          found: foundText || `~${brandName}`,
+        };
+      }
     }
 
     return {
@@ -74,7 +85,12 @@ export class LabelVerifier implements ILabelVerifier {
     const normalizedType = this.removePunctuation(productType.toUpperCase().trim());
     const normalizedExtracted = this.removePunctuation(extractedText);
 
-    if (normalizedExtracted.includes(normalizedType)) {
+    // Check for word boundary match (not just substring)
+    const typeWords = normalizedType.split(/\s+/);
+    const wordBoundaryPattern = typeWords.map(word => `\\b${this.escapeRegex(word)}\\b`).join('\\s+');
+    const regex = new RegExp(wordBoundaryPattern);
+
+    if (regex.test(normalizedExtracted)) {
       return {
         fieldType: FieldType.ProductType,
         status: MatchStatus.Match,
@@ -84,16 +100,22 @@ export class LabelVerifier implements ILabelVerifier {
       };
     }
 
+    // Fuzzy matching for OCR errors, but still require reasonable length match
     const score = fuzzball.partial_ratio(normalizedType, normalizedExtracted);
 
     if (score >= config.verification.fuzzyMatchThreshold) {
-      return {
-        fieldType: FieldType.ProductType,
-        status: MatchStatus.Match,
-        message: 'Product type found on label',
-        expected: productType,
-        found: productType,
-      };
+      const foundText = this.extractBestMatch(normalizedType, extractedText);
+
+      // Verify the found text is proportional to the search term
+      if (foundText && foundText.length >= normalizedType.length * config.verification.fuzzyMatchMinLength) {
+        return {
+          fieldType: FieldType.ProductType,
+          status: MatchStatus.Match,
+          message: 'Product type found on label',
+          expected: productType,
+          found: foundText || productType,
+        };
+      }
     }
 
     return {
@@ -182,23 +204,23 @@ export class LabelVerifier implements ILabelVerifier {
   }
 
   private verifyNetContents(value: number, unit: string, extractedText: string): FieldCheck {
-    const expectedMl = this.normalizer.convertToMilliliters(value, unit);
+    // Extract volume text with unit from OCR
+    const foundVolume = this.extractVolumeWithUnit(extractedText);
 
-    const extractedMl = this.normalizer.normalizeVolume(extractedText);
+    if (foundVolume) {
+      // Normalize both the expected and found values for comparison
+      const normalizedExpected = this.normalizeVolumeString(value, unit);
+      const normalizedFound = this.normalizeVolumeString(foundVolume.value, foundVolume.unit);
 
-    if (extractedMl !== null) {
-      // Round both to 2 decimal places for comparison to avoid floating point errors
-      const roundedExpected = Math.round(expectedMl * 100) / 100;
-      const roundedExtracted = Math.round(extractedMl * 100) / 100;
-
-      // Exact match required - no tolerance (but with rounding for floating point)
-      if (roundedExtracted === roundedExpected) {
+      // Exact match on value and unit (no conversions)
+      if (normalizedExpected.value === normalizedFound.value &&
+          normalizedExpected.unit === normalizedFound.unit) {
         return {
           fieldType: FieldType.NetContents,
           status: MatchStatus.Match,
           message: 'Net contents matches',
           expected: `${value} ${unit}`,
-          found: `${roundedExtracted} ml`,
+          found: `${foundVolume.value} ${foundVolume.unit}`,
         };
       }
 
@@ -206,8 +228,8 @@ export class LabelVerifier implements ILabelVerifier {
         fieldType: FieldType.NetContents,
         status: MatchStatus.Mismatch,
         message: 'Net contents does not match label',
-        expected: `${value} ${unit} (${roundedExpected} ml)`,
-        found: `${roundedExtracted} ml`,
+        expected: `${value} ${unit}`,
+        found: `${foundVolume.value} ${foundVolume.unit}`,
       };
     }
 
@@ -219,8 +241,58 @@ export class LabelVerifier implements ILabelVerifier {
     };
   }
 
+  /**
+   * Extract volume value and unit from OCR text
+   */
+  private extractVolumeWithUnit(text: string): { value: number; unit: string } | null {
+    const normalized = text.toUpperCase().replace(/\.(\s|$)/g, '$1').replace(/\s+/g, ' ');
+
+    // Search for volume patterns in order of specificity
+    const patterns = [
+      { regex: /(\d+(?:\.\d+)?)\s*(?:FL\s*OZ|FLOZ)/i, unit: 'fl oz' },
+      { regex: /(\d+(?:\.\d+)?)\s*GAL/i, unit: 'gal' },
+      { regex: /(\d+(?:\.\d+)?)\s*ML/i, unit: 'ml' },
+      { regex: /(\d+(?:\.\d+)?)\s*CL/i, unit: 'cl' },
+      { regex: /(\d+(?:\.\d+)?)\s*L(?:\s|$)/i, unit: 'L' },
+    ];
+
+    for (const pattern of patterns) {
+      const match = normalized.match(pattern.regex);
+      if (match) {
+        const value = parseFloat(match[1]);
+        if (!isNaN(value) && value > 0) {
+          return { value, unit: pattern.unit };
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Normalize volume string for comparison (handle decimal variations)
+   */
+  private normalizeVolumeString(value: number, unit: string): { value: number; unit: string } {
+    // Normalize unit to lowercase for comparison
+    const normalizedUnit = unit.toLowerCase().trim();
+
+    // Round value to 2 decimal places to avoid floating point issues
+    const roundedValue = Math.round(value * 100) / 100;
+
+    return { value: roundedValue, unit: normalizedUnit };
+  }
+
+
   private removePunctuation(text: string): string {
-    return text.replace(/[^A-Z0-9 ]/g, '');
+    // Keep apostrophes for possessives like "Daniel's"
+    return text.replace(/[^A-Z0-9' ]/g, '');
+  }
+
+  /**
+   * Escape special regex characters
+   */
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   /**
@@ -233,13 +305,14 @@ export class LabelVerifier implements ILabelVerifier {
     const index = normalizedExtracted.indexOf(normalizedSearch);
     if (index === -1) return null;
 
-    // Extract the original text (with punctuation) from the same position
+    // Extract the original text (with punctuation including apostrophes) from the same position
     let charCount = 0;
     let startIdx = 0;
 
     for (let i = 0; i < extractedText.length; i++) {
       const char = extractedText[i];
-      if (/[A-Z0-9 ]/.test(char.toUpperCase())) {
+      // Include apostrophes when counting characters
+      if (/[A-Z0-9' ]/.test(char.toUpperCase())) {
         if (charCount === index) {
           startIdx = i;
           break;
@@ -272,7 +345,7 @@ export class LabelVerifier implements ILabelVerifier {
       }
     }
 
-    return bestScore >= 70 ? bestMatch : null;
+    return bestScore >= config.verification.bestMatchThreshold ? bestMatch : null;
   }
 
   private verifyGovernmentWarning(extractedText: string): FieldCheck {
@@ -291,7 +364,7 @@ export class LabelVerifier implements ILabelVerifier {
       const foundKeywords = keywords.filter(keyword => extractedText.includes(keyword));
 
       // Require at least 80% of keywords to be present
-      return foundKeywords.length >= Math.ceil(keywords.length * 0.8);
+      return foundKeywords.length >= Math.ceil(keywords.length * config.verification.keywordMatchThreshold);
     });
 
     // Require all sections to be present

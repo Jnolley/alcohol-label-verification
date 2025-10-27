@@ -6,15 +6,16 @@ Shared types, enums, and interfaces used across the application.
 
 ```
 common/
-├── contracts/            # Type definitions
+├── contracts/            # Type definitions (one interface per file)
 │   ├── form-data.ts
 │   ├── verification-result.ts
 │   └── field-check.ts
-├── enums/               # Enumerations
-│   ├── field-type.enum.ts
-│   └── match-status.enum.ts
-└── index.ts             # Barrel exports
+└── enums/               # Enumerations
+    ├── field-type.ts
+    └── match-status.ts
 ```
+
+**Note**: Each contract is in its own file following single-responsibility principle.
 
 ## Core Types
 
@@ -56,13 +57,42 @@ Individual field verification result.
 ```
 
 ### ExtractedText
-OCR extraction output.
+OCR extraction output (defined in `services/engine/ocr/contracts/`).
 
 ```typescript
 {
   raw: string
   normalized: string
   confidence: number
+  words: DetectedWord[]
+  imageDimensions?: {
+    original: { width: number; height: number }
+    processed: { width: number; height: number }
+  }
+  processedImageBuffer?: Buffer
+}
+```
+
+### DetectedWord
+Individual word detected by OCR (defined in `services/engine/ocr/contracts/`).
+
+```typescript
+{
+  text: string
+  bbox: BoundingBox
+  confidence: number
+}
+```
+
+### BoundingBox
+Coordinates for detected text (defined in `services/engine/ocr/contracts/`).
+
+```typescript
+{
+  x: number
+  y: number
+  width: number
+  height: number
 }
 ```
 
@@ -84,8 +114,12 @@ Verification statuses:
 
 ## Usage
 
-All types are exported from `common/index.ts`:
+Types are imported directly from their source files:
 
 ```typescript
-import { FormData, VerificationResult, FieldType } from './common';
+import { FormData } from './common/contracts/form-data';
+import { VerificationResult } from './common/contracts/verification-result';
+import { FieldCheck } from './common/contracts/field-check';
+import { FieldType } from './common/enums/field-type';
+import { MatchStatus } from './common/enums/match-status';
 ```

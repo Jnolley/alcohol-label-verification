@@ -1,15 +1,4 @@
-export interface BoundingBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export interface DetectedWord {
-  text: string;
-  bbox: BoundingBox;
-  confidence: number;
-}
+import { DetectedWord } from './detected-word';
 
 export interface ExtractedText {
   raw: string;

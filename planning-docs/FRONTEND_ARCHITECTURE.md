@@ -113,3 +113,14 @@ src/
 3. **Type Safety** - TypeScript throughout
 4. **Unidirectional Data Flow** - Components → Store → Service → API
 5. **Dependency Injection** - Angular DI
+
+---
+
+## Detailed Layer Documentation
+
+Each layer has its own detailed documentation file:
+
+- **[Core Layer](../frontend/src/app/core/core.md)** - Auth and toast services
+- **[Shared Layer](../frontend/src/app/shared/shared.md)** - Models, enums, constants, components
+- **[Label Verification Feature](../frontend/src/app/features/label-verification/label-verification.md)** - Main verification workflow with components, services, and store
+- **[Admin Feature](../frontend/src/app/features/admin/admin.md)** - Admin dashboard, submission review, and authentication

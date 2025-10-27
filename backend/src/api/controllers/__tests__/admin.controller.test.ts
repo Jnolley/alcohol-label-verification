@@ -1,13 +1,14 @@
 import { Request, Response } from 'express';
 import { AdminController } from '../admin.controller';
-import { SubmissionStore } from '../../../storage/implementation/submission.store';
-import { Submission, SubmissionStatus } from '../../../storage/contracts/submission';
+import { ISubmissionStore } from '../../../storage/interface/submission.store.interface';
+import { Submission } from '../../../storage/contracts/submission';
+import { SubmissionStatus } from '../../../storage/contracts/submission-status';
 import { MatchStatus } from '../../../common/enums/match-status';
 import { FieldType } from '../../../common/enums/field-type';
 
 describe('AdminController', () => {
   let controller: AdminController;
-  let mockSubmissionStore: jest.Mocked<SubmissionStore>;
+  let mockSubmissionStore: jest.Mocked<ISubmissionStore>;
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let jsonMock: jest.Mock;

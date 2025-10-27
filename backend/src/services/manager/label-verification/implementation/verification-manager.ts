@@ -1,16 +1,11 @@
 import { IVerificationManager } from '../interface/verification-manager.interface';
 import { FormData } from '../../../../common/contracts/form-data';
 import { VerificationResult } from '../../../../common/contracts/verification-result';
-import { ExtractedText } from '../../../engine/ocr/contracts/extracted-text';
 import { IFieldValidator } from '../../../validation/field-validation/interface/field-validator.interface';
 import { IImageValidator } from '../../../utility/image-processing/interface/image-validator.interface';
 import { ITextExtractor } from '../../../engine/ocr/interface/text-extractor.interface';
 import { ILabelVerifier } from '../../../engine/verification/interface/label-verifier.interface';
-
-export interface ExtendedVerificationResult {
-  result: VerificationResult;
-  ocrData: ExtractedText;
-}
+import { ExtendedVerificationResult } from '../contracts/extended-verification-result';
 
 export class VerificationManager implements IVerificationManager {
   constructor(

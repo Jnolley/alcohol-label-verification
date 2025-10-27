@@ -11,6 +11,9 @@ export class FieldValidator implements IFieldValidator {
     if (brandName.length === 0) {
       throw createError(400, 'Brand name is required');
     }
+    if (brandName.length < 2) {
+      throw createError(400, 'Brand name must be at least 2 characters');
+    }
     if (brandName.length > 200) {
       throw createError(400, 'Brand name cannot exceed 200 characters');
     }
@@ -21,6 +24,9 @@ export class FieldValidator implements IFieldValidator {
     const productType = formData.productType.trim();
     if (productType.length === 0) {
       throw createError(400, 'Product type is required');
+    }
+    if (productType.length < 2) {
+      throw createError(400, 'Product type must be at least 2 characters');
     }
     if (productType.length > 200) {
       throw createError(400, 'Product type cannot exceed 200 characters');

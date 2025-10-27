@@ -1,0 +1,74 @@
+# AI-Powered Alcohol Label Verification App Checklist
+
+- [x] **Project Overview**
+    - [x] Build a full-stack web application that simulates a simplified version of the TTB label approval process.
+    - [x] Accept an alcohol label image and a form with product information.
+    - [x] Use AI to verify if the image's content matches the form's data.
+    - [x] Test ability to follow instructions, coding skills across the stack, and self-direction/judgment.
+    - [x] Complete the project in about one day, keeping it simple but noting potential extensions.
+
+- [x] **Project Requirements**
+    - [x] **1. Form Input (Simplified TTB Application Form)**
+        - [x] Create a web form for key information: Brand Name, Product Class/Type, Alcohol Content.
+        - [x] (Optional) Include Net Contents or other orfields (e.g., Manufacturer/Bottler Name & Address, Warnings).
+        - [x] Ensure the form is clear and easy to use with appropriate input types (text for names, number/text for ABV).
+        - [x] Include an option to upload a label image.
+    - [x] **2. Image Upload for Label**
+        - [x] Provide a way to upload an image (e.g., `<input type="file">` or drag-and-drop).
+        - [x] Support common image formats (JPEG, PNG, etc.).
+        - [x] Assume the image contains necessary text clearly enough to be recognized.
+    - [x] **3. Backend: AI Processing (OCR/Image Analysis)**
+        - [x] Implement backend AI functionality to extract text from the label image (e.g., using OCR libraries like pytesseract, Google Vision API, AWS Textract, or OpenCV).
+        - [x] (Optional) Use image classification or template matching for creativity.
+        - [x] Compare extracted text with form inputs (Brand Name, Product Class/Type, Alcohol Content, and optionally Net Contents).
+        - [x] Perform basic text normalization (e.g., ignore case differences, handle common OCR errors).
+        - [x] Document assumptions (e.g., case-insensitive matching, exact alcohol percentage match).
+        - [x] (Bonus) Check for "GOVERNMENT WARNING" or a portion of the health warning statement.
+    - [x] **4. Verification & Results Display**
+        - [x] Present a results page or message indicating if the label matches the form.
+        - [x] Show a success message if all key fields match.
+        - [x] Show a failure message with specifics if there are mismatches or missing info (e.g., brand name mismatch).
+        - [x] Handle unreadable images or errors (e.g., inform the user to try a clearer image).
+        - [x] Report all discrepancies, not just the first, for thoroughness.
+        - [x] Use visual cues (e.g., green check or colored text) for clarity.
+    - [x] **5. User Interface & UX**
+        - [x] Design a reasonably pleasant and clear UI (e.g., logical layout, grouped fields, proper labels).
+        - [x] Display results on the same page below the form or navigate to a results page.
+        - [x] Allow users to easily retry or edit the form without refilling everything.
+        - [x] (Bonus) Highlight portions of the image where text was found.
+    - [x] **6. Technical Constraints and Flexibility**
+        - [x] Use any preferred programming languages or frameworks (e.g., HTML/CSS/JS, React, Node.js, Python Flask/FastAPI/Django, Next.js).
+        - [x] Use off-the-shelf OCR libraries or APIs (e.g., free tiers, no sensitive keys exposed).
+        - [x] Deploy the app live (e.g., Vercel, Netlify, Heroku, Render) or provide local run instructions.
+        - [x] No database or data persistence required; results shown immediately.
+        - [x] (Optional) Include manual testing with different images; formal unit tests are optional.
+    - [x] **7. Sample Label Examples**
+        - [x] Use sample labels (e.g., distilled spirits label with Brand Name "OLD TOM DISTILLERY," Class/Type "Kentucky Straight Bourbon Whiskey," Alcohol Content "45% Alc./Vol.," Net Contents "750 mL," Government Warning).
+        - [x] (Optional) Create or source test label images using AI generation or graphic design.
+
+- [x] **Bonus Objectives (Optional Enhancements)**
+    - [x] Detailed Compliance Checks: Verify exact government warning text or TTB rules (e.g., alcohol content descriptors).
+    - [x] Multiple Product Types: Handle different beverage types (e.g., Beer, Wine) with varied fields/checks.
+    - [x] Image Highlighting: Highlight detected text regions on the label image.
+    - [x] Refinement of OCR Results: Use fuzzy matching or regex to handle OCR errors.
+    - [x] Polish and UX Improvements: Add async submission, loading indicators, or professional styling (e.g., Bootstrap).
+    - [x] Automated Tests: Include tests for text-matching logic or end-to-end tests.
+
+- [x] **Deliverables**
+    - [x] Source Code Repository: Upload to GitHub (or similar) with all source code and a README.
+     - [x] README: Include setup steps, installation commands, OCR/AI tools used, assumptions, limitations, and run instructions.
+    - [x] Deployed Application Link: Provide a URL for the live app (e.g., Vercel, Heroku).
+    - [ ] (Optional) Sample Test Evidence: Screenshots or video/gif of the app in action.
+    - [ ] Submit via email with repository link, deployed app link, and any notes.
+
+- [x] **Evaluation Criteria**
+    - [x] Correctness & Completeness: Fulfill core requirements and accurately detect matches/mismatches.
+    - [x] Code Quality: Well-organized, readable, maintainable code with best practices.
+    - [x] Technical Choices: Appropriate tools/libraries (e.g., OCR vs. overkill neural networks).
+    - [x] UI/UX and Polish: User-friendly interface with clear messages and error handling.
+    - [x] Followed Instructions: Include requested deliverables (e.g., README, deployment).
+    - [x] Creativity & Bonus Efforts: Extra features or creative approaches.
+
+- [x] **Notes**
+    - [x] Focus on a working core application with clear code over an overly ambitious project.
+    - [x] Mention trade-offs or cut optional parts in notes if time-constrained.

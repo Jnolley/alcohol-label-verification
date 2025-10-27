@@ -43,13 +43,14 @@ sequenceDiagram
 Prepares images for OCR processing.
 
 **Steps**:
-1. Resize to minimum 1000px dimension
-2. Convert to grayscale
-3. Normalize contrast
-4. Sharpen edges (sigma: 1.5)
-5. Increase contrast
+s1. Resize to minimum 1000px dimension (if needed, maintains aspect ratio)
+2. Flatten alpha channel to white background (if transparent)
+3. Normalize contrast (histogram spreading)
+4. Output as uncompressed PNG (quality 100, compressionLevel 0)
 
 Uses Sharp library for all transformations.
+
+**Configuration**: `image.minDimensionForOCR` (default: 1000px)
 
 ---
 

@@ -83,7 +83,7 @@
 - POST /api/verify with invalid image
 
 **OCR Integration:**
-- Test Tesseract.js integration
+- Test Google Vision integration
 - Test text extraction
 - Test confidence scoring
 

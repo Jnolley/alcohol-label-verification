@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import createError from 'http-errors';
-import { SubmissionStore } from '../../storage/implementation/submission.store';
-import { SubmissionStatus } from '../../storage/contracts/submission';
+import { ISubmissionStore } from '../../storage/interface/submission.store.interface';
+import { SubmissionStatus } from '../../storage/contracts/submission-status';
 
 export class AdminController {
-  constructor(private submissionStore: SubmissionStore) {}
+  constructor(private submissionStore: ISubmissionStore) {}
 
   login = async (req: Request, res: Response): Promise<void> => {
     res.json({ success: true, message: 'Login successful' });

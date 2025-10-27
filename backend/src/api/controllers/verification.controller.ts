@@ -1,13 +1,12 @@
 import { Request, Response } from 'express';
 import { IVerificationManager } from '../../services/manager/label-verification/interface/verification-manager.interface';
-import { VerificationManager } from '../../services/manager/label-verification/implementation/verification-manager';
-import { SubmissionStore } from '../../storage/implementation/submission.store';
+import { ISubmissionStore } from '../../storage/interface/submission.store.interface';
 import createError from 'http-errors';
 
 export class VerificationController {
   constructor(
     private readonly verificationManager: IVerificationManager,
-    private readonly submissionStore?: SubmissionStore
+    private readonly submissionStore?: ISubmissionStore
   ) {}
 
   async verifyLabel(req: Request, res: Response): Promise<void> {
@@ -30,7 +29,7 @@ export class VerificationController {
         netContentsUnit: req.body.netContentsUnit,
       };
 
-      if (this.submissionStore && this.verificationManager instanceof VerificationManager) {
+      if (this.submissionStore) {
         const { result, ocrData } = await this.verificationManager.processVerificationExtended(
           formData,
           req.file.buffer,

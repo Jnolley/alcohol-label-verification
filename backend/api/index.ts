@@ -15,9 +15,29 @@ import { ImagePreprocessor } from '../src/services/utility/image-processing/impl
 
 const app = express();
 
+// CORS middleware must be first - allow all Vercel preview and production deployments
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      /\.vercel\.app$/,
+      'http://localhost:4200'
+    ];
+
+    if (!origin || allowedOrigins.some(allowed =>
+      allowed instanceof RegExp ? allowed.test(origin) : allowed === origin
+    )) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: true, credentials: true }));
 
 const fieldValidator = new FieldValidator();
 const imageValidator = new ImageValidator();
@@ -46,15 +66,10 @@ app.get('/health', (req, res) => {
 });
 
 app.use((err: any, req: any, res: any, next: any) => {
-  console.error('Error details:', {
-    message: err.message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method
-  });
   res.status(err.status || 500).json({
     error: err.message || 'Internal server error',
-    status: err.status || 500
+    status: err.status || 500,
+    path: req.path
   });
 });
 

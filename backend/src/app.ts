@@ -7,6 +7,7 @@ import { createAdminRoutes } from './api/routes/admin.routes';
 import { VerificationManager } from './services/manager/label-verification/implementation/verification-manager';
 import { FieldValidator } from './services/validation/field-validation/implementation/field-validator';
 import { ImageValidator } from './services/utility/image-processing/implementation/image-validator';
+import { ImagePreprocessor } from './services/utility/image-processing/implementation/image-preprocessor';
 import { TextExtractor } from './services/engine/ocr/implementation/text-extractor';
 import { LabelVerifier } from './services/engine/verification/implementation/label-verifier';
 import { Normalizer } from './services/utility/normalization/implementation/normalizer';
@@ -19,9 +20,11 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true }));
   app.use(cors({ origin: true, credentials: true }));
 
+  // Initialize services with explicit dependency injection
   const fieldValidator = new FieldValidator();
   const imageValidator = new ImageValidator();
-  const textExtractor = new TextExtractor();
+  const imagePreprocessor = new ImagePreprocessor();
+  const textExtractor = new TextExtractor(imagePreprocessor);
   const normalizer = new Normalizer();
   const labelVerifier = new LabelVerifier(normalizer);
 

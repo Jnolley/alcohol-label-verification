@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://alcohol-label-verification-backend.vercel.app/api'
+  apiUrl: 'https://backend-eight-mauve-22.vercel.app/api'
 };

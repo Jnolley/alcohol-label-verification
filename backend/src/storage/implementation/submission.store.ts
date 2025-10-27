@@ -1,10 +1,12 @@
-import { Submission, SubmissionStatus } from '../contracts/submission';
+import { Submission } from '../contracts/submission';
+import { SubmissionStatus } from '../contracts/submission-status';
 import { FormData } from '../../common/contracts/form-data';
 import { VerificationResult } from '../../common/contracts/verification-result';
 import { ExtractedText } from '../../services/engine/ocr/contracts/extracted-text';
+import { ISubmissionStore } from '../interface/submission.store.interface';
 
 // In-memory storage for label verification submissions
-export class SubmissionStore {
+export class SubmissionStore implements ISubmissionStore {
   private submissions: Submission[] = [];
   private idCounter: number = 1;
 
@@ -60,12 +62,5 @@ export class SubmissionStore {
     }
 
     return submission;
-  }
-
-  getCount(status?: SubmissionStatus): number {
-    if (status) {
-      return this.submissions.filter((s) => s.status === status).length;
-    }
-    return this.submissions.length;
   }
 }
