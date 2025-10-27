@@ -69,6 +69,6 @@
     - [x] Followed Instructions: Include requested deliverables (e.g., README, deployment).
     - [x] Creativity & Bonus Efforts: Extra features or creative approaches.
 
-- [x] **Notes**
+- [x] **Notes** 
     - [x] Focus on a working core application with clear code over an overly ambitious project.
     - [x] Mention trade-offs or cut optional parts in notes if time-constrained.
