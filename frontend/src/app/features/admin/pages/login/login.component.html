@@ -9,7 +9,7 @@
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
         <!-- Username -->
         <div>
-          <label for="username" class="block text-sm font-medium text-gray-900 mb-1.5">
+          <label for="username" class="form-label">
             Username <span class="text-error">*</span>
           </label>
           <input
@@ -17,14 +17,14 @@
             type="text"
             formControlName="username"
             placeholder="Enter admin username"
-            class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-            [ngClass]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched ? 'border-error' : 'border-gray-300'"
+            class="form-input"
+            [ngClass]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched ? 'form-input-error' : 'form-input-default'"
           />
         </div>
 
         <!-- Password -->
         <div>
-          <label for="password" class="block text-sm font-medium text-gray-900 mb-1.5">
+          <label for="password" class="form-label">
             Password <span class="text-error">*</span>
           </label>
           <input
@@ -32,15 +32,15 @@
             type="password"
             formControlName="password"
             placeholder="Enter admin password"
-            class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-            [ngClass]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched ? 'border-error' : 'border-gray-300'"
+            class="form-input"
+            [ngClass]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched ? 'form-input-error' : 'form-input-default'"
           />
         </div>
 
         <!-- Error Message -->
         @if (error()) {
-          <div class="p-3 bg-red-50 border border-error rounded">
-            <p class="text-sm text-error">{{ error() }}</p>
+          <div class="alert-error">
+            {{ error() }}
           </div>
         }
 

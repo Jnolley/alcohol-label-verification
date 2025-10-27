@@ -24,41 +24,29 @@
     <div class="mb-6 flex gap-2 flex-wrap">
       <button
         (click)="filterBy('all')"
-        [class.bg-primary]="activeFilter() === 'all'"
-        [class.text-white]="activeFilter() === 'all'"
-        [class.bg-gray-200]="activeFilter() !== 'all'"
-        [class.text-gray-700]="activeFilter() !== 'all'"
-        class="px-4 py-2 rounded font-medium hover:opacity-80 transition-opacity"
+        class="filter-btn"
+        [ngClass]="activeFilter() === 'all' ? 'filter-btn-all-active filter-btn-active' : 'filter-btn-inactive'"
       >
         All ({{ submissions().length }})
       </button>
       <button
         (click)="filterBy(SubmissionStatus.PENDING)"
-        [class.bg-yellow-500]="activeFilter() === SubmissionStatus.PENDING"
-        [class.text-white]="activeFilter() === SubmissionStatus.PENDING"
-        [class.bg-gray-200]="activeFilter() !== SubmissionStatus.PENDING"
-        [class.text-gray-700]="activeFilter() !== SubmissionStatus.PENDING"
-        class="px-4 py-2 rounded font-medium hover:opacity-80 transition-opacity"
+        class="filter-btn"
+        [ngClass]="activeFilter() === SubmissionStatus.PENDING ? 'filter-btn-pending-active filter-btn-active' : 'filter-btn-inactive'"
       >
         Pending ({{ pendingCount() }})
       </button>
       <button
         (click)="filterBy(SubmissionStatus.APPROVED)"
-        [class.bg-green-500]="activeFilter() === SubmissionStatus.APPROVED"
-        [class.text-white]="activeFilter() === SubmissionStatus.APPROVED"
-        [class.bg-gray-200]="activeFilter() !== SubmissionStatus.APPROVED"
-        [class.text-gray-700]="activeFilter() !== SubmissionStatus.APPROVED"
-        class="px-4 py-2 rounded font-medium hover:opacity-80 transition-opacity"
+        class="filter-btn"
+        [ngClass]="activeFilter() === SubmissionStatus.APPROVED ? 'filter-btn-approved-active filter-btn-active' : 'filter-btn-inactive'"
       >
         Approved ({{ approvedCount() }})
       </button>
       <button
         (click)="filterBy(SubmissionStatus.REJECTED)"
-        [class.bg-red-500]="activeFilter() === SubmissionStatus.REJECTED"
-        [class.text-white]="activeFilter() === SubmissionStatus.REJECTED"
-        [class.bg-gray-200]="activeFilter() !== SubmissionStatus.REJECTED"
-        [class.text-gray-700]="activeFilter() !== SubmissionStatus.REJECTED"
-        class="px-4 py-2 rounded font-medium hover:opacity-80 transition-opacity"
+        class="filter-btn"
+        [ngClass]="activeFilter() === SubmissionStatus.REJECTED ? 'filter-btn-rejected-active filter-btn-active' : 'filter-btn-inactive'"
       >
         Rejected ({{ rejectedCount() }})
       </button>
@@ -79,7 +67,7 @@
         </div>
         <button
           (click)="loadSubmissions()"
-          class="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
+          class="btn-retry"
         >
           Retry
         </button>
@@ -119,31 +107,31 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               @for (submission of filteredSubmissions(); track submission.id) {
-                <tr class="hover:bg-gray-50 cursor-pointer" [routerLink]="['/admin/submissions', submission.id]">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr class="table-row-hover" [routerLink]="['/admin/submissions', submission.id]">
+                  <td class="table-cell-medium">
                     {{ submission.id }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td class="table-cell">
                     {{ submission.formData.brandName }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td class="table-cell">
                     {{ submission.formData.productType }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span
-                      class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                      class="status-badge"
                       [ngClass]="getStatusBadgeClass(submission.status)"
                     >
                       {{ submission.status }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td class="table-cell-muted">
                     {{ formatDate(submission.timestamp) }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <a
                       [routerLink]="['/admin/submissions', submission.id]"
-                      class="text-primary hover:underline"
+                      class="link-primary"
                     >
                       Review →
                     </a>

@@ -4,7 +4,7 @@
 
 ## Overview
 
-Users upload alcohol label images and submit product information through a web form. The system uses Google Cloud Vision API to extract text from the label and automatically verify it matches the submitted data. Failed verifications are saved for admin review with visual OCR annotations showing detected text bounding boxes.
+Users upload one or two alcohol label images (primary and optional secondary) and submit product information through a web form. The system uses Google Cloud Vision API to extract text from the labels and automatically verify it matches the submitted data. Multi-image support allows verification when information is split across front and back labels. Failed verifications are saved for admin review with visual OCR annotations showing detected text bounding boxes.
 
 ---
 
@@ -28,13 +28,14 @@ Users upload alcohol label images and submit product information through a web f
 ## Key Features
 
 ### Core Verification
-- **Automated OCR** - Extracts text from label images
+- **Automated OCR** - Extracts text from label images (supports up to 2 images)
+- **Multi-Image Support** - Upload primary and optional secondary label images when information is split
 - **Field-by-Field Validation** - Compares extracted text with form data:
   - Brand Name (fuzzy matching, 90% threshold, word boundary detection)
-  - Product Type (keyword matching, 80% threshold)
+  - Product Type (fuzzy matching, 90% threshold)
   - Alcohol Content (exact percentage match)
   - Net Contents (optional, volume + unit verification)
-  - Government Warning (validates 7 required sections)
+  - Government Warning (context-aware fuzzy matching on 7 required sections, 65% similarity tolerance for OCR errors)
 
 ### Advanced Features
 - **Image Preprocessing** - Automatic resizing, alpha flattening, contrast normalization
@@ -154,7 +155,10 @@ These scripts will:
    - **Product Type**: Enter the type of alcohol (e.g., "Bourbon Whiskey", "Red Wine", "IPA Beer")
    - **Alcohol Content**: Enter the ABV percentage (e.g., "40" for 40% ABV)
    - **Net Contents** (optional): Enter volume and select unit (e.g., "750" ml)
-3. Upload a clear image of the label (JPEG, PNG, WEBP, max 10MB)
+3. Upload label image(s):
+   - **Primary Image** (required): Main label image
+   - **Secondary Image** (optional): Additional image if info is split across front/back labels
+   - Supports JPEG, PNG, WEBP (max 10MB each)
 4. Click "Verify Label"
 5. View results:
    - **Green checkmarks** = Field verified successfully
@@ -261,19 +265,20 @@ All verification thresholds are in `backend/src/config.ts`:
 
 ## Assumptions
 
-1. **Image Type**: User uploads a photograph/image of an alcohol bottle label (not other document types)
-2. **Single Photo**: All required fields (brand, type, ABV, warning, net contents) are visible in one photo/label image
-3. **Image Quality**: Labels are photographed clearly with good lighting and minimal glare
-4. **Text Readability**: Text on labels are readable by OCR
-5. **Language**: All labels are in English
-6. **Label Format**: Standard TTB-compliant label format (not highly decorative/artistic fonts)
-7. **Government Warning**: Exact TTB warning text is used (not paraphrased or abbreviated)
-8. **Net Contents**: Uses standard units (ml, cl, L, fl oz, gal) without automatic conversion
-9. **Alcohol Content**: Displayed as percentage with "%" symbol or "Alc./Vol." notation
-10. **Case Insensitivity**: Verification ignores case differences (BOURBON matches bourbon)
-11. **Punctuation Tolerance**: Minor punctuation differences are ignored (Jack Daniels matches Jack Daniel's)
-12. **Text-Based Matching**: OCR extracts all text into one blob; verification searches the entire text for each field using pattern matching (no position/location awareness)
-13. **Unique Field Values**: Each field has unique text on the label (e.g., if "40%" appears twice, the first match is used)
+1. **Image Type**: User uploads photograph(s)/image(s) of an alcohol bottle label (not other document types)
+2. **One or Two Photos**: Required fields may be on one label or split across two label images (primary + optional secondary). System combines text from both for comprehensive verification.
+3. **Same Product**: When uploading multiple images, all images must be from the same product/bottle (e.g., front and back labels of one bottle, not labels from different products)
+4. **Image Quality**: Labels are photographed clearly with good lighting and minimal glare
+5. **Text Readability**: Text on labels are readable by OCR
+6. **Language**: All labels are in English
+7. **Label Format**: Standard TTB-compliant label format (not highly decorative/artistic fonts)
+8. **Government Warning**: Exact TTB warning text is used (not paraphrased or abbreviated)
+9. **Net Contents**: Uses standard units (ml, cl, L, fl oz, gal) without automatic conversion
+10. **Alcohol Content**: Displayed as percentage with "%" symbol or "Alc./Vol." notation
+11. **Case Insensitivity**: Verification ignores case differences (BOURBON matches bourbon)
+12. **Punctuation Tolerance**: Minor punctuation differences are ignored (Jack Daniels matches Jack Daniel's)
+13. **Text-Based Matching**: OCR extracts all text into one blob; verification searches the entire text for each field using pattern matching (no position/location awareness)
+14. **Unique Field Values**: Each field has unique text on the label (e.g., if "40%" appears twice, the first match is used)
 
 ## Limitations
 
@@ -284,7 +289,7 @@ All verification thresholds are in `backend/src/config.ts`:
    - Minimum 30% confidence threshold required (lower confidence rejected)
 
 2. **Text Matching**:
-   - Government warning must match TTB-required text closely 
+   - Government warning uses fuzzy matching (75-85% similarity) to handle OCR errors and minor variations
    - No abbreviation expansion (Dist. won't match Distillery)
    - No semantic understanding (cannot infer meaning or context)
 
@@ -332,7 +337,7 @@ npm test                 # Run all tests
 
 ### Public Endpoints
 - **POST** `/api/verify` - Submit label for verification
-  - Body: multipart/form-data (image + form fields)
+  - Body: multipart/form-data (`primaryImage` [required], `secondaryImage` [optional], form fields)
   - Returns: Verification results with field-by-field status
 
 - **GET** `/health` - Health check

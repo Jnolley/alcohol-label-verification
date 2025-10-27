@@ -20,6 +20,7 @@ export interface DetectedWord {
   text: string;
   bbox: BoundingBox;
   confidence: number;
+  imageIndex?: number; // Which image this word came from (0 = primary, 1 = secondary, etc.)
 }
 
 export interface ExtractedText {
@@ -36,7 +37,8 @@ export interface ExtractedText {
 export interface Submission {
   id: string;
   formData: LabelFormData;
-  imageBase64: string;
+  images: string[]; // Array of base64 encoded images
+  imageBase64?: string; // Deprecated: for backward compatibility with old submissions
   ocrData: ExtractedText;
   verificationResult: VerificationResult;
   status: SubmissionStatus;

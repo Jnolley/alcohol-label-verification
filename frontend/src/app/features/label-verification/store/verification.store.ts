@@ -8,7 +8,8 @@ import { ToastService } from '../../../core/services/toast.service';
 
 const initialState: VerificationStoreState = {
   formData: null,
-  imageFile: null,
+  primaryImage: null,
+  secondaryImage: null,
   isSubmitting: false,
   verificationResult: null,
   error: null,
@@ -18,21 +19,21 @@ export const VerificationStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
   withComputed((store) => ({
-    canSubmit: computed(() => store.formData() !== null && store.imageFile() !== null),
+    canSubmit: computed(() => store.formData() !== null && store.primaryImage() !== null),
     hasResults: computed(() => store.verificationResult() !== null),
   })),
   withMethods((store, verificationService = inject(VerificationService), toastService = inject(ToastService)) => ({
     setFormData(formData: LabelFormData) {
       patchState(store, { formData });
     },
-    setImage(imageFile: File) {
-      patchState(store, { imageFile });
+    setImages({primary, secondary}: {primary: File | null, secondary: File | null}) {
+      patchState(store, { primaryImage: primary, secondaryImage: secondary });
     },
     submitVerification(onSuccess?: () => void) {
       const formData = store.formData();
-      const imageFile = store.imageFile();
+      const primaryImage = store.primaryImage();
 
-      if (!formData || !imageFile) {
+      if (!formData || !primaryImage) {
         return;
       }
 
@@ -42,7 +43,11 @@ export const VerificationStore = signalStore(
         verificationResult: null,
       });
 
-      verificationService.verifyLabel({ formData, imageFile }).subscribe({
+      verificationService.verifyLabel({
+        formData,
+        primaryImage,
+        secondaryImage: store.secondaryImage()
+      }).subscribe({
         next: (result: VerificationResult) => {
           patchState(store, {
             verificationResult: result,

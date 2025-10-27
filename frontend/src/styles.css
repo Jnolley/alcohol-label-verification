@@ -14,3 +14,168 @@
     }
   }
 }
+
+@layer components {
+  /* Form Controls */
+  .form-label {
+    @apply block text-sm font-medium text-gray-900 mb-1.5;
+  }
+
+  .form-input {
+    @apply w-full px-3 py-2 border rounded;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary;
+  }
+
+  .form-input-default {
+    @apply border-gray-300;
+  }
+
+  .form-input-error {
+    @apply border-error;
+  }
+
+  .form-input-success {
+    @apply border-success;
+  }
+
+  .form-input-warning {
+    @apply border-warning;
+  }
+
+  .form-error-text {
+    @apply mt-1 text-sm text-error;
+  }
+
+  .form-helper-text {
+    @apply mt-1 text-sm text-gray-600;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply px-4 py-2 rounded font-medium transition-colors;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-white;
+    @apply hover:bg-blue-700 focus:ring-primary;
+  }
+
+  .btn-secondary {
+    @apply btn bg-gray-600 text-white;
+    @apply hover:bg-gray-700 focus:ring-gray-600;
+  }
+
+  .btn-danger {
+    @apply btn bg-error text-white;
+    @apply hover:bg-red-700 focus:ring-error;
+  }
+
+  .btn-outline {
+    @apply btn border border-gray-300 text-gray-700 bg-white;
+    @apply hover:bg-gray-50;
+  }
+
+  /* Status Badges */
+  .badge {
+    @apply px-3 py-1 text-sm rounded-full font-medium inline-flex items-center;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .badge-error {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  .badge-gray {
+    @apply bg-gray-100 text-gray-800;
+  }
+
+  /* Alert/Message Boxes */
+  .alert {
+    @apply px-4 py-3 rounded-md border;
+  }
+
+  .alert-error {
+    @apply alert bg-red-50 border-red-200 text-red-800;
+  }
+
+  .alert-success {
+    @apply alert bg-green-50 border-green-200 text-green-800;
+  }
+
+  .alert-warning {
+    @apply alert bg-yellow-50 border-yellow-200 text-yellow-800;
+  }
+
+  .alert-info {
+    @apply alert bg-blue-50 border-blue-200 text-blue-800;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white shadow-md rounded-lg p-6;
+  }
+
+  .card-header {
+    @apply text-xl font-semibold mb-4;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply animate-spin rounded-full border-b-2;
+  }
+
+  .spinner-primary {
+    @apply spinner border-primary;
+  }
+
+  .spinner-sm {
+    @apply h-5 w-5;
+  }
+
+  .spinner-md {
+    @apply h-8 w-8;
+  }
+
+  .spinner-lg {
+    @apply h-12 w-12;
+  }
+
+  /* Data Display */
+  .data-row {
+    @apply grid grid-cols-2 gap-2;
+  }
+
+  .data-label {
+    @apply text-gray-600;
+  }
+
+  .data-value {
+    @apply font-medium;
+  }
+
+  /* Links */
+  .link {
+    @apply text-primary hover:underline transition-colors;
+  }
+
+  /* Field Verification Badges */
+  .field-badge-verified {
+    @apply ml-2 text-xs text-success;
+  }
+
+  .field-badge-not-found {
+    @apply ml-2 text-xs text-warning;
+  }
+}

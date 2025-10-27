@@ -1,39 +1,58 @@
 import { Component, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+interface UploadedImage {
+  file: File;
+  preview: string;
+}
+
 @Component({
   selector: 'app-image-upload',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './image-upload.component.html'
+  templateUrl: './image-upload.component.html',
+  styleUrl: './image-upload.component.css'
 })
 export class ImageUploadComponent {
-  fileSelected = output<File>();
+  filesSelected = output<{primary: File | null, secondary: File | null}>();
 
-  selectedFile = signal<File | null>(null);
-  previewUrl = signal<string | null>(null);
+  images = signal<UploadedImage[]>([]);
   error = signal<string | null>(null);
   isDragging = signal<boolean>(false);
 
   readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+  readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+  readonly MAX_FILES = 2;
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+    const files = input.files;
 
-    if (!file) {
-      this.clearSelection();
+    if (!files || files.length === 0) {
       return;
     }
 
-    this.processFile(file);
+    // Process each selected file
+    for (let i = 0; i < files.length; i++) {
+      if (this.images().length >= this.MAX_FILES) {
+        this.error.set(`Maximum ${this.MAX_FILES} images allowed`);
+        break;
+      }
+      this.processFile(files[i]);
+    }
   }
 
   clearSelection(): void {
-    this.selectedFile.set(null);
-    this.previewUrl.set(null);
+    this.images.set([]);
     this.error.set(null);
+    this.emitFiles();
+  }
+
+  removeImage(index: number): void {
+    const current = this.images();
+    this.images.set(current.filter((_, i) => i !== index));
+    this.error.set(null);
+    this.emitFiles();
   }
 
   onDragOver(event: DragEvent): void {
@@ -53,91 +72,90 @@ readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
     event.stopPropagation();
     this.isDragging.set(false);
 
-    // Try getting file from files first (local file drops)
-    const file = event.dataTransfer?.files?.[0];
-    if (file) {
-      this.processFile(file);
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      // Process dropped files
+      for (let i = 0; i < files.length; i++) {
+        if (this.images().length >= this.MAX_FILES) {
+          this.error.set(`Maximum ${this.MAX_FILES} images allowed`);
+          break;
+        }
+        this.processFile(files[i]);
+      }
       return;
     }
 
-    // Handle drops from browser windows/other sources using items API
+    // Handle URL drops
     const items = event.dataTransfer?.items;
     if (items) {
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
 
-        // Try to get as file first
         if (item.kind === 'file') {
           const droppedFile = item.getAsFile();
-          if (droppedFile) {
+          if (droppedFile && this.images().length < this.MAX_FILES) {
             this.processFile(droppedFile);
-            return;
+          }
+        } else if (item.kind === 'string' && item.type.match('^text/uri-list')) {
+          if (this.images().length < this.MAX_FILES) {
+            item.getAsString(async (url) => {
+              try {
+                const fetchedFile = await this.fetchImageFile(url);
+                this.processFile(fetchedFile);
+              } catch (error) {
+                this.error.set('Failed to load image from URL');
+              }
+            });
           }
         }
-
-        // If it's a string (URL), fetch the image
-        if (item.kind === 'string' && item.type.match('^text/uri-list')) {
-          item.getAsString(async (url) => {
-            try {
-              await this.fetchAndProcessImage(url);
-            } catch (error) {
-              this.error.set('Failed to load image from URL');
-            }
-          });
-          return;
-        }
-      }
-    }
-
-    // Fallback: try to get URL from getData
-    const url = event.dataTransfer?.getData('text/uri-list') || event.dataTransfer?.getData('text/html');
-    if (url) {
-      try {
-        await this.fetchAndProcessImage(url);
-      } catch (error) {
-        this.error.set('Failed to load image from URL');
       }
     }
   }
 
-  private async fetchAndProcessImage(url: string): Promise<void> {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-
-      // Convert blob to File
-      const fileName = url.split('/').pop() || 'image.jpg';
-      const file = new File([blob], fileName, { type: blob.type });
-
-      this.processFile(file);
-    } catch (error) {
-      throw new Error('Failed to fetch image');
-    }
+  private async fetchImageFile(url: string): Promise<File> {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const fileName = url.split('/').pop() || 'image.jpg';
+    return new File([blob], fileName, { type: blob.type });
   }
 
   private processFile(file: File): void {
+    // Validate file type
     if (!this.ALLOWED_TYPES.includes(file.type)) {
       this.error.set('Please select a valid image file (JPEG, PNG, or WebP)');
-      this.clearSelection();
       return;
     }
 
+    // Validate file size
     if (file.size > this.MAX_FILE_SIZE) {
       this.error.set('File size must be less than 10MB');
-      this.clearSelection();
+      return;
+    }
+
+    // Check max files limit
+    if (this.images().length >= this.MAX_FILES) {
+      this.error.set(`Maximum ${this.MAX_FILES} images allowed`);
       return;
     }
 
     this.error.set(null);
-    this.selectedFile.set(file);
 
+    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
-      this.previewUrl.set(e.target?.result as string);
+      const preview = e.target?.result as string;
+      this.images.update(current => [...current, { file, preview }]);
+      this.emitFiles();
     };
     reader.readAsDataURL(file);
+  }
 
-    this.fileSelected.emit(file);
+  private emitFiles(): void {
+    const current = this.images();
+    this.filesSelected.emit({
+      primary: current[0]?.file || null,
+      secondary: current[1]?.file || null
+    });
   }
 
   formatFileSize(bytes: number): string {

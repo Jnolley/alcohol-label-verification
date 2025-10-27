@@ -3,6 +3,6 @@ import { VerificationResult } from '../../../../common/contracts/verification-re
 import { ExtendedVerificationResult } from '../contracts/extended-verification-result';
 
 export interface IVerificationManager {
-  processVerification(formData: FormData, imageBuffer: Buffer, filename: string): Promise<VerificationResult>;
-  processVerificationExtended(formData: FormData, imageBuffer: Buffer, filename: string): Promise<ExtendedVerificationResult>;
+  processVerification(formData: FormData, imageBuffer: Buffer | Buffer[], filename: string | string[]): Promise<VerificationResult>;
+  processVerificationExtended(formData: FormData, imageBuffer: Buffer | Buffer[], filename: string | string[]): Promise<ExtendedVerificationResult>;
 }

@@ -3,7 +3,8 @@ import { VerificationResult } from '../../../shared/models/verification-result.m
 
 export type VerificationStoreState = {
   formData: LabelFormData | null;
-  imageFile: File | null;
+  primaryImage: File | null;
+  secondaryImage: File | null;
   isSubmitting: boolean;
   verificationResult: VerificationResult | null;
   error: string | null;

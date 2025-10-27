@@ -43,11 +43,23 @@ export class SubmissionDetailComponent implements OnInit {
 
     this.adminService.getSubmission(id).subscribe({
       next: (response) => {
-        this.submission.set(response.submission);
-        this.adminNotes = response.submission.adminNotes || '';
+        const submission = response.submission;
+
+        // Backward compatibility: migrate old single-image format to array
+        if (!submission.images || submission.images.length === 0) {
+          if (submission.imageBase64) {
+            submission.images = [submission.imageBase64];
+          } else {
+            submission.images = [];
+          }
+        }
+
+        this.submission.set(submission);
+        this.adminNotes = submission.adminNotes || '';
         this.loading.set(false);
       },
       error: (err: Error) => {
+        console.error('Failed to load submission:', err);
         this.error.set('Failed to load submission');
         this.loading.set(false);
       }

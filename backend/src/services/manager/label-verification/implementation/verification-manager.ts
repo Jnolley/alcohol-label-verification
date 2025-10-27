@@ -17,14 +17,23 @@ export class VerificationManager implements IVerificationManager {
 
   async processVerification(
     formData: FormData,
-    imageBuffer: Buffer,
-    filename: string
+    imageBuffer: Buffer | Buffer[],
+    filename: string | string[]
   ): Promise<VerificationResult> {
     this.fieldValidator.validate(formData);
 
-    await this.imageValidator.validate(imageBuffer, filename);
+    const buffers = Array.isArray(imageBuffer) ? imageBuffer : [imageBuffer];
+    const filenames = Array.isArray(filename) ? filename : [filename];
 
-    const extractedText = await this.textExtractor.extract(imageBuffer);
+    // Validate all images
+    for (let i = 0; i < buffers.length; i++) {
+      await this.imageValidator.validate(buffers[i], filenames[i] || `image-${i}`);
+    }
+
+    // Extract text (uses combined extraction for multiple images)
+    const extractedText = buffers.length > 1
+      ? await this.textExtractor.extractFromMultiple(buffers)
+      : await this.textExtractor.extract(buffers[0]);
 
     const result = this.labelVerifier.verify(formData, extractedText);
 
@@ -36,14 +45,23 @@ export class VerificationManager implements IVerificationManager {
    */
   async processVerificationExtended(
     formData: FormData,
-    imageBuffer: Buffer,
-    filename: string
+    imageBuffer: Buffer | Buffer[],
+    filename: string | string[]
   ): Promise<ExtendedVerificationResult> {
     this.fieldValidator.validate(formData);
 
-    await this.imageValidator.validate(imageBuffer, filename);
+    const buffers = Array.isArray(imageBuffer) ? imageBuffer : [imageBuffer];
+    const filenames = Array.isArray(filename) ? filename : [filename];
 
-    const ocrData = await this.textExtractor.extract(imageBuffer);
+    // Validate all images
+    for (let i = 0; i < buffers.length; i++) {
+      await this.imageValidator.validate(buffers[i], filenames[i] || `image-${i}`);
+    }
+
+    // Extract text (uses combined extraction for multiple images)
+    const ocrData = buffers.length > 1
+      ? await this.textExtractor.extractFromMultiple(buffers)
+      : await this.textExtractor.extract(buffers[0]);
 
     const result = this.labelVerifier.verify(formData, ocrData);
 

@@ -1,0 +1,151 @@
+/* Submission Detail Page Styles */
+
+.loading-container {
+  @apply flex items-center justify-center min-h-screen;
+  @apply flex-col gap-4 text-center;
+}
+
+.page-container {
+  @apply max-w-7xl mx-auto p-6 space-y-6;
+}
+
+.header {
+  @apply flex items-center justify-between;
+}
+
+.header-left {
+  @apply flex items-center gap-4;
+}
+
+.header-right {
+  @apply flex items-center gap-4;
+}
+
+.title {
+  @apply text-2xl font-bold;
+}
+
+.submitted-date {
+  @apply text-sm text-gray-600;
+}
+
+.btn-approve {
+  @apply px-6 py-2 bg-green-600 text-white rounded-md font-medium;
+  @apply hover:bg-green-700 transition-colors;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-reject {
+  @apply px-6 py-2 bg-red-600 text-white rounded-md font-medium;
+  @apply hover:bg-red-700 transition-colors;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.content-grid {
+  @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+}
+
+.left-column {
+  @apply space-y-6;
+}
+
+.right-column {
+  @apply space-y-6;
+}
+
+.verification-summary {
+  @apply p-4 rounded-md mb-4;
+}
+
+.verification-summary.success {
+  @apply bg-green-50 border-2 border-green-500;
+}
+
+.verification-summary.error {
+  @apply bg-red-50 border-2 border-red-500;
+}
+
+.verification-title {
+  @apply text-lg font-semibold;
+}
+
+.verification-summary.success .verification-title {
+  @apply text-green-800;
+}
+
+.verification-summary.error .verification-title {
+  @apply text-red-800;
+}
+
+.verification-message {
+  @apply text-sm mt-1;
+}
+
+.verification-summary.success .verification-message {
+  @apply text-green-700;
+}
+
+.verification-summary.error .verification-message {
+  @apply text-red-700;
+}
+
+.field-checks {
+  @apply space-y-3;
+}
+
+.field-checks-title {
+  @apply font-semibold text-gray-900 mb-2;
+}
+
+.field-check {
+  @apply border border-gray-200 rounded-md p-3 bg-gray-50;
+}
+
+.field-check-header {
+  @apply flex items-center justify-between mb-2;
+}
+
+.field-type {
+  @apply font-medium text-gray-900;
+}
+
+.badge-sm {
+  @apply text-xs px-2 py-0.5;
+}
+
+.field-check-details {
+  @apply space-y-1 text-sm;
+}
+
+.detail-row {
+  @apply grid grid-cols-[100px_1fr] gap-2;
+}
+
+.detail-label {
+  @apply text-gray-600 font-medium;
+}
+
+.ocr-confidence {
+  @apply text-sm text-gray-600 mt-4 pt-4 border-t border-gray-200;
+}
+
+.confidence-value {
+  @apply font-medium text-gray-900;
+}
+
+.notes-textarea {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md;
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.admin-notes-display {
+  @apply mt-4;
+}
+
+.admin-notes-label {
+  @apply text-gray-600 font-medium mb-1;
+}
+
+.admin-notes-content {
+  @apply bg-gray-50 p-3 rounded border border-gray-200;
+}

@@ -23,7 +23,12 @@ export class VerificationService {
       formData.append('netContentsUnit', request.formData.netContentsUnit);
     }
 
-    formData.append('image', request.imageFile);
+    if (request.primaryImage) {
+      formData.append('primaryImage', request.primaryImage);
+    }
+    if (request.secondaryImage) {
+      formData.append('secondaryImage', request.secondaryImage);
+    }
 
     return this.http.post<VerificationResult>(`${this.apiUrl}/verify`, formData);
   }

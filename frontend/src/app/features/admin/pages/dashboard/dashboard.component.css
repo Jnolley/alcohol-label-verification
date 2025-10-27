@@ -1,0 +1,55 @@
+.filter-btn {
+  @apply px-4 py-2 rounded font-medium hover:opacity-80 transition-opacity;
+}
+
+.filter-btn-active {
+  @apply text-white;
+}
+
+.filter-btn-inactive {
+  @apply bg-gray-200 text-gray-700;
+}
+
+.filter-btn-all-active {
+  @apply bg-primary;
+}
+
+.filter-btn-pending-active {
+  @apply bg-yellow-500;
+}
+
+.filter-btn-approved-active {
+  @apply bg-green-500;
+}
+
+.filter-btn-rejected-active {
+  @apply bg-red-500;
+}
+
+.status-badge {
+  @apply px-2 inline-flex text-xs leading-5 font-semibold rounded-full;
+}
+
+.table-cell {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+}
+
+.table-cell-medium {
+  @apply px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900;
+}
+
+.table-cell-muted {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-500;
+}
+
+.table-row-hover {
+  @apply hover:bg-gray-50 cursor-pointer;
+}
+
+.link-primary {
+  @apply text-primary hover:underline;
+}
+
+.btn-retry {
+  @apply mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors;
+}

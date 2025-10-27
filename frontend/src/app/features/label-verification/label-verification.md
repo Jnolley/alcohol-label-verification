@@ -34,12 +34,12 @@ sequenceDiagram
     participant Results as Verification Results
 
     User->>Form: Fill out form fields
-    User->>Upload: Select label image
+    User->>Upload: Select label images (1-2)
     User->>Page: Click "Verify Label"
 
     Page->>Store: setLoading(true)
-    Page->>Service: verify(formData, image)
-    Service->>API: POST /api/verify
+    Page->>Service: verify(formData, images)
+    Service->>API: POST /api/verify (multipart)
 
     alt Success
         API->>Service: VerificationResult
@@ -79,24 +79,34 @@ Smart component for collecting label information.
 ---
 
 ### Image Upload
-Component for uploading label images.
+Component for uploading multiple label images (primary and optional secondary).
 
 **Location:** `components/image-upload/`
 
 **Features:**
-- Drag-and-drop file upload
+- Drag-and-drop multiple file upload (up to 2 images)
 - Click to browse file selector
-- Image preview after selection
-- File validation (JPEG, PNG, WEBP, max 10MB)
-- Clear/remove uploaded image
+- Thumbnail previews for all uploaded images
+- File validation (JPEG, PNG, WEBP, max 10MB each)
+- Individual remove buttons for each image
+- Visual feedback for drag-over state
+- File count display and limit enforcement
 
 **Outputs:**
-- `imageSelected: EventEmitter<File>` - Emits selected image file
+- `imagesSelected: EventEmitter<File[]>` - Emits array of selected image files
 
 **Validation:**
 - File type: image/jpeg, image/png, image/webp
-- File size: max 10MB
-- Shows error if invalid file selected
+- File size: max 10MB per image
+- Maximum 2 images allowed
+- Shows error if invalid file selected or limit exceeded
+
+**User Experience:**
+- Primary image shows "Primary Label" badge
+- Secondary image shows "Secondary Label" badge
+- File size displayed for each image in KB/MB
+- Drag-and-drop zone highlights on hover
+- Clear visual distinction between empty and filled slots
 
 ---
 
@@ -148,10 +158,12 @@ Handles API communication for label verification.
 **Location:** `services/verification.service.ts`
 
 **Methods:**
-- `verify(formData: LabelFormData, imageFile: File): Observable<VerificationResult>`
-  - Creates multipart/form-data request
+- `verify(formData: LabelFormData, imageFiles: File[]): Observable<VerificationResult>`
+  - Creates multipart/form-data request with 1-2 images
+  - Primary image sent as `primaryImage` field
+  - Secondary image (if provided) sent as `secondaryImage` field
   - Sends to `POST /api/verify` endpoint
-  - Returns verification results
+  - Returns verification results with combined OCR data from all images
 
 **Error Handling:**
 - Catches HTTP errors
@@ -172,7 +184,7 @@ Manages verification feature state using @ngrx/signals.
 ```typescript
 {
   formData: LabelFormData | null;
-  imageFile: File | null;
+  imageFiles: File[];
   result: VerificationResult | null;
   isLoading: boolean;
   error: string | null;
@@ -181,14 +193,14 @@ Manages verification feature state using @ngrx/signals.
 
 **Methods:**
 - `setFormData(data: LabelFormData): void` - Store form data
-- `setImageFile(file: File): void` - Store uploaded image
+- `setImageFiles(files: File[]): void` - Store uploaded images (1-2 files)
 - `setLoading(loading: boolean): void` - Set loading state
 - `setResult(result: VerificationResult): void` - Store verification result
 - `setError(error: string): void` - Store error message
 - `reset(): void` - Clear all state
 
 **Computed Signals:**
-- `canSubmit: Signal<boolean>` - True when form and image are ready
+- `canSubmit: Signal<boolean>` - True when form and at least one image are ready
 - `hasResult: Signal<boolean>` - True when verification completed
 
 ---
@@ -208,11 +220,11 @@ Main container component that orchestrates the verification workflow.
 - Manage verification state
 
 **Flow:**
-1. User fills form and uploads image
+1. User fills form and uploads images (1-2)
 2. User clicks "Verify Label"
-3. Page calls verification service
-4. Shows loading modal
-5. Displays results when complete
+3. Page calls verification service with all images
+4. Shows loading modal during OCR processing
+5. Displays results when complete (combined from all images)
 
 ---
 

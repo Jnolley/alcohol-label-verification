@@ -13,7 +13,8 @@ import { LabelFormData } from '../../../../shared/models/label-form-data.model';
     ImageUploadComponent,
     VerificationModalComponent
   ],
-  templateUrl: './verification.component.html'
+  templateUrl: './verification.component.html',
+  styleUrl: './verification.component.css'
 })
 export class VerificationComponent {
   store = inject(VerificationStore);
@@ -26,8 +27,8 @@ export class VerificationComponent {
     this.store.setFormData(data);
   }
 
-  onImageSelected(file: File): void {
-    this.store.setImage(file);
+  onImagesSelected(files: {primary: File | null, secondary: File | null}): void {
+    this.store.setImages(files);
   }
 
   onSubmit(): void {

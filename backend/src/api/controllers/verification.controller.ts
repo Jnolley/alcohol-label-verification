@@ -11,11 +11,15 @@ export class VerificationController {
 
   async verifyLabel(req: Request, res: Response): Promise<void> {
     try {
-      if (!req.file) {
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+      const primaryImage = files?.primaryImage?.[0];
+      const secondaryImage = files?.secondaryImage?.[0];
+
+      if (!primaryImage && !secondaryImage) {
         res.status(400).json({
           error: {
             code: 'MISSING_IMAGE',
-            message: 'Image file is required',
+            message: 'At least one image file is required',
           },
         });
         return;
@@ -29,17 +33,36 @@ export class VerificationController {
         netContentsUnit: req.body.netContentsUnit,
       };
 
+      const imageBuffers: Buffer[] = [];
+      const filenames: string[] = [];
+      if (primaryImage) {
+        imageBuffers.push(primaryImage.buffer);
+        filenames.push(primaryImage.originalname);
+      }
+      if (secondaryImage) {
+        imageBuffers.push(secondaryImage.buffer);
+        filenames.push(secondaryImage.originalname);
+      }
+
       if (this.submissionStore) {
         const { result, ocrData } = await this.verificationManager.processVerificationExtended(
           formData,
-          req.file.buffer,
-          req.file.originalname
+          imageBuffers,
+          filenames
         );
 
-        // Use preprocessed image so admin sees exactly what OCR processed
-        const imageBuffer = ocrData.processedImageBuffer || req.file.buffer;
-        const imageBase64 = imageBuffer.toString('base64');
-        this.submissionStore.add(formData, imageBase64, ocrData, result);
+        // Convert images to base64 for storage
+        const imageBase64s: string[] = [];
+        if (primaryImage) {
+          const buffer = ocrData.processedImageBuffers?.[0] || primaryImage.buffer;
+          imageBase64s.push(buffer.toString('base64'));
+        }
+        if (secondaryImage) {
+          const buffer = ocrData.processedImageBuffers?.[1] || ocrData.processedImageBuffers?.[0] || secondaryImage.buffer;
+          imageBase64s.push(buffer.toString('base64'));
+        }
+
+        this.submissionStore.add(formData, imageBase64s, ocrData, result);
 
         if (!result.success) {
           res.status(200).json({
@@ -60,8 +83,8 @@ export class VerificationController {
       } else {
         const result = await this.verificationManager.processVerification(
           formData,
-          req.file.buffer,
-          req.file.originalname
+          imageBuffers,
+          filenames
         );
 
         res.status(200).json({

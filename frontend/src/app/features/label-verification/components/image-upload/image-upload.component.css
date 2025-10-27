@@ -1,0 +1,27 @@
+.upload-zone {
+  @apply block w-full px-4 py-3 border-2 border-dashed rounded;
+  @apply text-center cursor-pointer transition-colors;
+  @apply focus-within:outline-none focus-within:ring-2 focus-within:ring-primary;
+}
+
+.upload-zone-default {
+  @apply border-gray-300 hover:border-primary;
+}
+
+.upload-zone-dragging {
+  @apply border-primary bg-primary/5;
+}
+
+.image-preview-card {
+  @apply border border-gray-300 rounded p-4;
+}
+
+.image-preview-img {
+  @apply max-w-full h-auto max-h-64 mx-auto border border-gray-200 rounded;
+}
+
+.btn-remove {
+  @apply px-3 py-1.5 text-sm text-error border border-error rounded;
+  @apply hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-error;
+  @apply flex-shrink-0 transition-colors;
+}

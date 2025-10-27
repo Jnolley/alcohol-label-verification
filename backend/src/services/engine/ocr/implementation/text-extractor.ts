@@ -151,6 +151,60 @@ export class TextExtractor implements ITextExtractor {
     }
   }
 
+  async extractFromMultiple(buffers: Buffer[]): Promise<ExtractedText> {
+    if (buffers.length === 0) {
+      throw createError(400, 'At least one image buffer is required');
+    }
+
+    if (buffers.length === 1) {
+      const result = await this.extract(buffers[0]);
+      // Set imageIndex to 0 for single image
+      result.words = result.words.map(word => ({ ...word, imageIndex: 0 }));
+      return result;
+    }
+
+    // Extract text from each image
+    const results: ExtractedText[] = [];
+    for (let i = 0; i < buffers.length; i++) {
+      const result = await this.extract(buffers[i]);
+      // Tag each word with its image index
+      result.words = result.words.map(word => ({ ...word, imageIndex: i }));
+      results.push(result);
+    }
+
+    // Combine results
+    const combinedRaw = results.map((r, i) =>
+      i === 0 ? r.raw : `\n\n--- SECONDARY LABEL ---\n\n${r.raw}`
+    ).join('');
+
+    // Combine normalized text (join with space for matching, but include separator in raw)
+    const combinedNormalized = results.map(r => r.normalized).join(' ');
+
+    // Average confidence
+    const totalConfidence = results.reduce((sum, r) => sum + r.confidence, 0);
+    const avgConfidence = Math.round(totalConfidence / results.length);
+
+    // Merge words arrays (now with imageIndex set for each word)
+    const combinedWords = results.flatMap(r => r.words);
+
+    // Use first image's dimensions
+    const imageDimensions = results[0].imageDimensions;
+
+    // Collect all processed image buffers
+    const processedImageBuffers = results
+      .map(r => r.processedImageBuffer)
+      .filter((buf): buf is Buffer => buf !== undefined);
+
+    return {
+      raw: combinedRaw,
+      normalized: combinedNormalized,
+      confidence: avgConfidence,
+      words: combinedWords,
+      imageDimensions,
+      processedImageBuffers: processedImageBuffers.length > 0 ? processedImageBuffers : undefined,
+    };
+  }
+
   private normalizeText(text: string): string {
     return this.collapseWhitespace(text.toUpperCase().trim());
   }

@@ -12,14 +12,14 @@ export class SubmissionStore implements ISubmissionStore {
 
   add(
     formData: FormData,
-    imageBase64: string,
+    images: string[],
     ocrData: ExtractedText,
     verificationResult: VerificationResult
   ): Submission {
     const submission: Submission = {
       id: `SUB-${this.idCounter++}`,
       formData,
-      imageBase64,
+      images,
       ocrData,
       verificationResult,
       status: verificationResult.success ? SubmissionStatus.AUTO_APPROVED : SubmissionStatus.PENDING,

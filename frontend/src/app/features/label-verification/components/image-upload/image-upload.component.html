@@ -6,10 +6,10 @@
 >
   <div>
     <label class="block text-sm font-medium text-gray-900 mb-1.5">
-      Label Image <span class="text-error">*</span>
+      Label Images <span class="text-error">*</span>
     </label>
     <p class="text-sm text-gray-600 mb-3">
-      Upload a clear image of the alcohol label (JPEG, PNG, or WebP, max 10MB)
+      Upload 1-2 clear images of the label (JPEG, PNG, or WebP, max 10MB each)
     </p>
 
     <input
@@ -17,19 +17,21 @@
       type="file"
       accept="image/jpeg,image/png,image/jpg,image/webp"
       (change)="onFileSelected($event)"
+      multiple
       class="hidden"
       id="file-upload"
       data-cy="file-input"
     />
 
-    @if (!selectedFile()) {
+    <!-- Upload Zone - Show if less than 2 images -->
+    @if (images().length < 2) {
       <label
         for="file-upload"
         (dragenter)="onDragOver($event)"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave($event)"
         (drop)="onDrop($event)"
-        [class]="'block w-full px-4 py-3 border-2 border-dashed rounded text-center cursor-pointer focus-within:outline-none focus-within:ring-2 focus-within:ring-primary transition-colors ' + (isDragging() ? 'border-primary bg-blue-50' : 'border-gray-300 hover:border-primary')"
+        [class]="isDragging() ? 'upload-zone upload-zone-dragging' : 'upload-zone upload-zone-default'"
       >
         <div class="space-y-1">
           <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -38,40 +40,49 @@
           <div class="text-sm text-gray-600">
             <span class="font-medium text-primary">Click to upload</span> or drag and drop
           </div>
-          <p class="text-xs text-gray-500">PNG, JPG, WebP up to 10MB</p>
+          <p class="text-xs text-gray-500">
+            @if (images().length === 0) {
+              Upload 1-2 images • PNG, JPG, WebP up to 10MB
+            } @else {
+              Add 1 more image • PNG, JPG, WebP up to 10MB
+            }
+          </p>
         </div>
       </label>
     }
 
-    @if (selectedFile()) {
-      <div class="border border-gray-300 rounded p-4">
-        <!-- Preview -->
-        @if (previewUrl()) {
-          <div class="mb-3">
-            <img
-              [src]="previewUrl()"
-              [alt]="selectedFile()!.name"
-              class="max-w-full h-auto max-h-64 mx-auto border border-gray-200 rounded"
-              data-cy="image-preview"
-            />
+    <!-- Uploaded Images Grid -->
+    @if (images().length > 0) {
+      <div class="grid grid-cols-1 gap-4 mt-4" [class.md:grid-cols-2]="images().length === 2">
+        @for (image of images(); track $index) {
+          <div class="image-preview-card">
+            <!-- Preview -->
+            <div class="mb-3">
+              <img
+                [src]="image.preview"
+                [alt]="image.file.name"
+                class="image-preview-img"
+                [attr.data-cy]="'image-preview-' + $index"
+              />
+            </div>
+
+            <!-- File Info -->
+            <div class="flex items-center justify-between">
+              <div class="text-sm flex-1 min-w-0 mr-2">
+                <p class="font-medium text-gray-900 truncate">{{ image.file.name }}</p>
+                <p class="text-gray-500">{{ formatFileSize(image.file.size) }}</p>
+              </div>
+              <button
+                type="button"
+                (click)="removeImage($index)"
+                class="btn-remove"
+                [attr.data-cy]="'remove-image-button-' + $index"
+              >
+                Remove
+              </button>
+            </div>
           </div>
         }
-
-        <!-- File Info -->
-        <div class="flex items-center justify-between">
-          <div class="text-sm">
-            <p class="font-medium text-gray-900">{{ selectedFile()!.name }}</p>
-            <p class="text-gray-500">{{ formatFileSize(selectedFile()!.size) }}</p>
-          </div>
-          <button
-            type="button"
-            (click)="clearSelection(); fileInput.value = ''"
-            class="px-3 py-1.5 text-sm text-error border border-error rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-error"
-            data-cy="remove-image-button"
-          >
-            Remove
-          </button>
-        </div>
       </div>
     }
 

@@ -12,3 +12,79 @@
     opacity: 1;
   }
 }
+
+/* Component classes */
+.modal-backdrop {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50;
+}
+
+.modal-container {
+  @apply bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto;
+}
+
+.modal-header {
+  @apply sticky top-0 bg-white border-b border-gray-200 px-6 py-4;
+  @apply flex items-center justify-between;
+}
+
+.modal-close-btn {
+  @apply text-gray-400 hover:text-gray-600 focus:outline-none transition-colors;
+}
+
+.result-summary {
+  @apply mb-6 p-4 border rounded flex items-start gap-3;
+}
+
+.result-summary-success {
+  @apply bg-green-50 border-success;
+}
+
+.result-summary-error {
+  @apply bg-red-50 border-error;
+}
+
+.field-check-card {
+  @apply p-4 border rounded flex items-start gap-3;
+}
+
+.field-check-success {
+  @apply bg-green-50 border-success;
+}
+
+.field-check-error {
+  @apply bg-red-50 border-error;
+}
+
+.field-check-warning {
+  @apply bg-yellow-50 border-warning;
+}
+
+.icon-success {
+  @apply w-6 h-6 flex-shrink-0 text-success;
+}
+
+.icon-error {
+  @apply w-6 h-6 flex-shrink-0 text-error;
+}
+
+.icon-warning {
+  @apply w-6 h-6 flex-shrink-0 text-warning;
+}
+
+.icon-large-success {
+  @apply w-8 h-8 text-success flex-shrink-0;
+}
+
+.icon-large-error {
+  @apply w-8 h-8 text-error flex-shrink-0;
+}
+
+.modal-footer {
+  @apply sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end;
+}
+
+.btn-close {
+  @apply px-6 py-2.5 bg-primary text-white rounded font-medium;
+  @apply hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  @apply transition-colors;
+}

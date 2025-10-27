@@ -5,7 +5,7 @@ This document describes the additional features implemented beyond the core requ
 ## 1. Admin Review System with Visual OCR Annotations
 
 ### Implementation
-A comprehensive admin dashboard that allows manual review of submissions with visual bounding boxes overlaid on label images showing exactly where text was detected by the OCR engine.
+A comprehensive admin dashboard (/admin/login) that allows manual review of submissions with visual bounding boxes overlaid on label images showing exactly where text was detected by the OCR engine.
 
 ### Why It Was Added
 The core requirements only ask for verification results, but in real-world TTB operations, many labels require human review. OCR accuracy varies with image quality, decorative fonts, and lighting conditions. Edge cases need expert judgment that automated systems cannot provide.
@@ -40,10 +40,10 @@ The core requirements only ask for verification results, but in real-world TTB o
 ## 2. Advanced Fuzzy Matching for OCR Errors
 
 ### Implementation
-Multi-tiered text matching using Levenshtein distance algorithm via the Fuzzball library to handle common OCR misreads and text variations.
+Multi-tiered text matching using Levenshtein distance algorithm via the Fuzzball library to handle common OCR misreads and text variations. Different thresholds are used for different field types based on complexity and error tolerance.
 
 ### Why It Was Added
-OCR engines frequently misread similar characters (0/O, 1/l/I), miss punctuation, or have case variations. Requiring exact matches would create high false rejection rates for compliant labels. Real-world labels have variations in formatting that should still pass verification.
+OCR engines frequently misread similar characters (0/O, 1/l/I), miss punctuation, or have case variations. Requiring exact matches would create high false rejection rates for compliant labels. Real-world labels have variations in formatting that should still pass verification. Government warning text in particular requires extra tolerance due to length and formatting variations.
 
 ### How It Works
 
@@ -56,7 +56,9 @@ OCR engines frequently misread similar characters (0/O, 1/l/I), miss punctuation
 
 2. **Fuzzy Match** (if exact fails)
    - Calculate similarity score using Fuzzball (Levenshtein distance)
-   - 90% threshold for acceptance
+   - Field-specific thresholds and algorithms:
+     - Brand Name / Product Type: 90% threshold using partial_ratio
+     - Government Warning: 65% threshold using token_set_ratio (more forgiving of OCR errors)
    - Minimum 50% length match to prevent "a" matching long strings
 
 3. **Best Match Extraction**
@@ -66,16 +68,26 @@ OCR engines frequently misread similar characters (0/O, 1/l/I), miss punctuation
 
 **Configuration** (backend/src/config.ts):
 ```typescript
-fuzzyMatchThreshold: 90      // Minimum similarity percentage
-fuzzyMatchMinLength: 0.5     // Prevents short false positives
-bestMatchThreshold: 70       // Minimum extraction score
+fuzzyMatchThreshold: 90           // Brand/Product similarity
+fuzzyMatchMinLength: 0.5          // Prevents short false positives
+bestMatchThreshold: 70            // Minimum extraction score
+governmentWarningMinSections: 7   // All 7 sections required
 ```
+
+**Government Warning Matching:**
+- Context-aware: isolates government warning section from full label text
+- Splits required warning into 7 sections
+- Each section matched independently using token_set_ratio (handles OCR errors like "OPERATE" → "OPERAS")
+- Requires all 7 sections to pass for verification success
+- 65% threshold handles common OCR errors (line breaks, missing letters)
+- Backend logs detailed scores for admin debugging
 
 ### Value Added
 - Reduced false rejections by approximately 40% during testing
 - Handles OCR quirks (l vs I, 0 vs O, missing apostrophes)
 - Users don't need perfect spelling if intent is clear
 - Admin sees both expected and actual found text for transparency
+- Government warning verification tuned for real-world label variations
 
 ## 3. Image Preprocessing Pipeline
 
@@ -335,16 +347,102 @@ this.error.set('Descriptive error message');
 - Accessible to users with disabilities
 - Consistent visual language reduces cognitive load
 
+## 8. Multi-Image Support
+
+### Implementation
+Support for uploading and verifying up to 2 label images (front and back) with OCR data tracked per image.
+
+### Why It Was Added
+Many alcohol products have information split across front and back labels. Government warning text is often on the back, while brand name and alcohol content are on the front. Single-image verification would fail for compliant products with split information.
+
+### How It Works
+
+**Upload:**
+- Image upload component allows up to 2 images
+- Drag-and-drop or file selection
+- Preview both images before submission
+- File size and format validation for each
+
+**OCR Processing:**
+- `extractFromMultiple()` method processes each image separately
+- Each detected word tagged with `imageIndex` (0 for primary, 1 for secondary)
+- Combined normalized text from both images for matching
+- Separate processed image buffers stored for admin viewing
+
+**Admin Annotations:**
+- Each image displayed in separate card
+- Image annotator receives `imageIndex` parameter
+- Filters OCR words to only show those from corresponding image
+- Prevents bounding boxes from one image appearing on another
+
+**Backward Compatibility:**
+- Single-image submissions still work (imageIndex defaults to 0)
+- Old submissions without imageIndex gracefully handled
+
+### Value Added
+- Handles real-world scenario of front/back label splits
+- More accurate verification for multi-surface products
+- Admin can see exactly which image each detected text came from
+- Prevents confusing bounding box overlays
+
+## 9. Global CSS Utilities for DRY Code
+
+### Implementation
+Centralized Tailwind utility classes in `styles.css` to eliminate repetitive verbose class strings across components.
+
+### Why It Was Added
+Initial implementation had long inline Tailwind class strings repeated across components (e.g., `"w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"`). This violated DRY principles, made templates hard to read, and complicated maintenance.
+
+### How It Works
+
+**Global Utilities** (frontend/src/styles.css):
+```css
+.form-label { @apply block text-sm font-medium text-gray-900 mb-1.5; }
+.form-input { @apply w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary; }
+.btn-primary { @apply px-4 py-2 bg-primary text-white rounded font-medium hover:bg-blue-700; }
+.alert-error { @apply px-4 py-3 rounded-md border bg-red-50 border-red-200 text-red-800; }
+.card { @apply bg-white shadow-md rounded-lg p-6; }
+.spinner-lg { @apply animate-spin rounded-full border-b-2 h-12 w-12; }
+```
+
+**Usage:**
+```html
+<!-- Before: verbose inline classes -->
+<label class="block text-sm font-medium text-gray-900 mb-1.5">Brand Name</label>
+<input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary" />
+
+<!-- After: clean utility classes -->
+<label class="form-label">Brand Name</label>
+<input class="form-input" />
+```
+
+**Standardized Patterns:**
+- Form inputs with consistent focus states
+- Button variants (primary, secondary, danger, outline)
+- Status badges (success, error, warning, info)
+- Alert boxes with appropriate colors
+- Loading spinners in multiple sizes
+- Data display rows and cards
+
+### Value Added
+- Reduced template line count by ~30%
+- Consistent styling across all components
+- Single place to update design system
+- Easier to read and maintain templates
+- Better adherence to design patterns
+
 ## Summary
 
-These seven bonus features transform the application from a basic proof-of-concept into a production-ready system:
+These nine bonus features transform the application from a basic proof-of-concept into a production-ready system:
 
-1. **Admin System** - Human oversight for edge cases
-2. **Fuzzy Matching** - Real-world OCR imperfection handling
-3. **Image Preprocessing** - Maximized OCR accuracy
-4. **Test Suite** - Reliability and maintainability
-5. **Configuration** - Tunable and transparent
-6. **Interface Architecture** - Testable and flexible
-7. **Professional UI** - Excellent user experience
+1. **Admin System** - Human oversight for edge cases with visual OCR debugging
+2. **Fuzzy Matching** - Real-world OCR imperfection handling with field-specific thresholds
+3. **Image Preprocessing** - Maximized OCR accuracy through automated optimization
+4. **Test Suite** - Reliability and maintainability with 173 automated tests
+5. **Configuration** - Tunable and transparent system parameters
+6. **Interface Architecture** - Testable and flexible dependency injection
+7. **Professional UI** - Excellent user experience with loading states and error handling
+8. **Multi-Image Support** - Front/back label verification with per-image OCR tracking
+9. **Global CSS Utilities** - DRY code with reusable component styles
 
 Each feature solves a specific real-world problem that core requirements didn't address but would be critical in actual TTB label verification operations.

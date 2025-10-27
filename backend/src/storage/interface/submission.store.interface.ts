@@ -7,7 +7,7 @@ import { ExtractedText } from '../../services/engine/ocr/contracts/extracted-tex
 export interface ISubmissionStore {
   add(
     formData: FormData,
-    imageBase64: string,
+    images: string[],
     ocrData: ExtractedText,
     verificationResult: VerificationResult
   ): Submission;

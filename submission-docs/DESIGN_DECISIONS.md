@@ -470,8 +470,10 @@ it('should reject partial matches shorter than 50% of search term')
 **Trade-off:** Tighter coupling, deploy together
 
 ### Fuzzy Matching vs Exact Match
-**Chose:** Fuzzy Matching (90% threshold)
-**Reasoning:** OCR errors are common and expected
+**Chose:** Fuzzy Matching with varying thresholds and algorithms by field type
+- Brand Name / Product Type: 90% threshold using partial_ratio
+- Government Warning: 65% threshold using token_set_ratio with context-aware extraction
+**Reasoning:** OCR errors are common and expected, government warning needs extra tolerance for line breaks and character misreads
 **Trade-off:** May accept incorrect matches below threshold
 
 ## Lessons Learned
@@ -481,7 +483,11 @@ it('should reject partial matches shorter than 50% of search term')
 - Centralized config enabled easy tuning
 - Comprehensive tests caught bugs early
 - Fuzzy matching reduced false rejections significantly
-- Admin system made OCR debugging much easier
+- Context-aware government warning matching handles OCR line breaks and character errors
+- token_set_ratio algorithm excellent for handling OCR errors in multi-word phrases
+- Admin system with visual OCR annotations made debugging much easier
+- Multi-image support handles front/back label scenarios
+- Global CSS utilities (DRY approach) reduced template verbosity
 
 ### What Could Be Improved
 - Type sharing between frontend/backend (duplicate definitions)
@@ -489,6 +495,8 @@ it('should reject partial matches shorter than 50% of search term')
 - Rate limiting to prevent API abuse
 - Caching OCR results to reduce costs
 - Stricter frontend validation to reduce bad requests
+- More sophisticated positional matching (verify words appear in expected regions of label)
+- Component library (Angular Material/PrimeNG) instead of custom-built UI components
 
 ### If Starting Over
 - Use Nx monorepo for better TypeScript workspace management

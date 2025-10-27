@@ -66,26 +66,37 @@ sequenceDiagram
 ## Components
 
 ### Image Annotator
-Canvas-based component for displaying OCR bounding boxes over label images.
+Canvas-based component for displaying OCR bounding boxes over label images with interactive tooltips.
 
 **Location:** `components/image-annotator/`
 
 **Features:**
 - Renders label image on HTML5 canvas
-- Draws bounding boxes around detected words
-- Shows word text and confidence scores
-- Responsive canvas sizing
+- Draws color-coded bounding boxes around detected words
+- Interactive tooltips on hover showing word text, confidence, and field type
+- Toggle annotations on/off
+- Supports multiple images with per-image word filtering
+- Responsive canvas sizing with proper coordinate normalization
 
 **Inputs:**
-- `imageUrl: string` - Label image URL
-- `words: DetectedWord[]` - OCR detected words with bounding boxes
-- `imageDimensions: { width, height }` - Original image dimensions
+- `imageBase64: string` - Base64-encoded label image
+- `ocrData: ExtractedText` - Complete OCR results with all detected words
+- `verificationResult: VerificationResult` - Field verification results for color coding
+- `imageIndex: number` - Index of image (0 for primary, 1 for secondary)
 
 **Rendering:**
-- Red rectangles for word bounding boxes
-- Word text displayed above each box
-- Confidence score shown as percentage
-- Scales to fit container while maintaining aspect ratio
+- Color-coded bounding boxes:
+  - Green: Text matches expected values
+  - Red: Mismatched or not found text
+  - Cyan: Other detected text
+- Interactive tooltips show on hover:
+  - Detected word text
+  - OCR confidence score percentage
+  - Associated field type (if applicable)
+- Toggle button to show/hide annotations
+- Color-coded legend for understanding box colors
+- Canvas scales to fit container (max 600px height) while maintaining aspect ratio
+- Mouse coordinate normalization accounts for CSS scaling
 
 ---
 
@@ -150,23 +161,28 @@ Detailed view of a single submission with OCR annotations.
 **Route:** `/admin/submissions/:id`
 
 **Features:**
-- Display label image with OCR bounding boxes
-- Show extracted text from OCR
+- Display multiple label images (primary and secondary) with OCR bounding boxes
+- Show extracted text from OCR with confidence scores
 - Display form data submitted by user
 - Show field-by-field verification results
-- Approve/Reject buttons
+- Approve/Reject buttons in header
+- Admin notes textarea for pending submissions
 - Back to dashboard link
 
+**Layout:**
+- Two-column grid (left: form data and results, right: annotated images)
+- Header with Approve/Reject action buttons
+- Responsive design for mobile/tablet/desktop
+
 **Sections:**
-1. **Image Preview** - Label with annotations
-2. **OCR Results** - Raw extracted text
-3. **Form Data** - User-submitted values
-4. **Verification Results** - Field checks
-5. **Actions** - Approve/Reject buttons
+1. **Form Data** - User-submitted field values
+2. **Verification Results** - Field-by-field check status with OCR confidence
+3. **Admin Notes** - Textarea for adding review notes (pending only) or displaying saved notes (approved/rejected)
+4. **Label Images** - One or two annotated images with interactive tooltips
 
 **Actions:**
-- Approve: Change status to "approved"
-- Reject: Change status to "rejected"
+- Approve: Change status to "approved", saves admin notes, navigates to dashboard
+- Reject: Change status to "rejected", requires admin notes, navigates to dashboard
 - Updates via AdminService.updateSubmissionStatus()
 
 **Protected Route:**

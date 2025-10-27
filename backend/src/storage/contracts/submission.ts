@@ -6,7 +6,7 @@ import { SubmissionStatus } from './submission-status';
 export interface Submission {
   id: string;
   formData: FormData;
-  imageBase64: string;
+  images: string[]; // Array of base64 encoded images
   ocrData: ExtractedText;
   verificationResult: VerificationResult;
   status: SubmissionStatus;

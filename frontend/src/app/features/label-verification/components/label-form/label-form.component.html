@@ -1,13 +1,13 @@
 <form [formGroup]="form" class="space-y-6">
     <!-- Brand Name -->
     <div>
-      <label for="brandName" class="block text-sm font-medium text-gray-900 mb-1.5">
+      <label for="brandName" class="form-label">
         Brand Name <span class="text-error">*</span>
         @if (getFieldCheck('BRAND_NAME')) {
           @if (getFieldCheck('BRAND_NAME')!.status === 'MATCH') {
-            <span class="ml-2 text-xs text-success">✓ Verified</span>
+            <span class="field-badge-verified">✓ Verified</span>
           } @else if (getFieldCheck('BRAND_NAME')!.status === 'NOT_FOUND') {
-            <span class="ml-2 text-xs text-warning">⚠ Not found on label</span>
+            <span class="field-badge-not-found">⚠ Not found on label</span>
           }
         }
       </label>
@@ -17,11 +17,11 @@
         formControlName="brandName"
         placeholder="e.g., Old Tom Distillery"
         data-cy="brand-name-input"
-        class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-        [ngClass]="getFieldStatusClass('BRAND_NAME') || (brandName?.invalid && brandName?.touched ? 'border-error' : 'border-gray-300')"
+        class="form-input"
+        [ngClass]="getFieldStatusClass('BRAND_NAME') || (brandName?.invalid && brandName?.touched ? 'form-input-error' : 'form-input-default')"
       />
       @if (brandName?.invalid && brandName?.touched) {
-        <p class="mt-1 text-sm text-error">Brand name is required</p>
+        <p class="form-error-text">Brand name is required</p>
       }
       @if (getFieldCheck('BRAND_NAME') && getFieldCheck('BRAND_NAME')!.status !== 'MATCH') {
         <p class="mt-1 text-sm" [ngClass]="{
@@ -33,13 +33,13 @@
 
     <!-- Product Class/Type -->
     <div>
-      <label for="productType" class="block text-sm font-medium text-gray-900 mb-1.5">
+      <label for="productType" class="form-label">
         Product Class/Type <span class="text-error">*</span>
         @if (getFieldCheck('PRODUCT_TYPE')) {
           @if (getFieldCheck('PRODUCT_TYPE')!.status === 'MATCH') {
-            <span class="ml-2 text-xs text-success">✓ Verified</span>
+            <span class="field-badge-verified">✓ Verified</span>
           } @else if (getFieldCheck('PRODUCT_TYPE')!.status === 'NOT_FOUND') {
-            <span class="ml-2 text-xs text-warning">⚠ Not found on label</span>
+            <span class="field-badge-not-found">⚠ Not found on label</span>
           }
         }
       </label>
@@ -49,11 +49,11 @@
         formControlName="productType"
         placeholder="e.g., Kentucky Straight Bourbon Whiskey, IPA"
         data-cy="product-type-input"
-        class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-        [ngClass]="getFieldStatusClass('PRODUCT_TYPE') || (productType?.invalid && productType?.touched ? 'border-error' : 'border-gray-300')"
+        class="form-input"
+        [ngClass]="getFieldStatusClass('PRODUCT_TYPE') || (productType?.invalid && productType?.touched ? 'form-input-error' : 'form-input-default')"
       />
       @if (productType?.invalid && productType?.touched) {
-        <p class="mt-1 text-sm text-error">Product type is required</p>
+        <p class="form-error-text">Product type is required</p>
       }
       @if (getFieldCheck('PRODUCT_TYPE') && getFieldCheck('PRODUCT_TYPE')!.status !== 'MATCH') {
         <p class="mt-1 text-sm" [ngClass]="{

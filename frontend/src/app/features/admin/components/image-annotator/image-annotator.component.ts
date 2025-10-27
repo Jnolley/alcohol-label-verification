@@ -40,10 +40,11 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
   @Input() imageBase64!: string;
   @Input() ocrData!: ExtractedText;
   @Input() verificationResult!: VerificationResult;
+  @Input() imageIndex: number = 0; // Track which image this is (0 = primary, 1 = secondary)
 
   showAnnotations = signal(true);
   tooltip = signal<TooltipData | null>(null);
-  loading = signal(true);
+  loading = signal(false);
 
   private ctx: CanvasRenderingContext2D | null = null;
   private image: HTMLImageElement | null = null;
@@ -65,11 +66,11 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
   }
 
   ngAfterViewInit(): void {
-    this.initCanvas();
+    setTimeout(() => this.initCanvas());
   }
 
   private initCanvas(): void {
-    if (!this.imageBase64 || !this.ocrData || !this.verificationResult) {
+    if (!this.imageBase64 || !this.ocrData || !this.verificationResult || !this.canvasRef) {
       this.loading.set(false);
       return;
     }
@@ -86,25 +87,38 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
 
     this.image = new Image();
     this.image.onload = () => {
+      if (!this.canvasRef) {
+        this.loading.set(false);
+        return;
+      }
       this.setupCanvas();
       this.annotateWords();
       this.render();
       this.loading.set(false);
     };
+
     this.image.onerror = () => {
-      this.toastService.showError('Failed to load label image');
+      this.toastService.showError('Failed to load image. It may be corrupted or in an unsupported format.');
       this.loading.set(false);
     };
-    this.image.src = `data:image/png;base64,${this.imageBase64}`;
+
+    this.image.src = this.imageBase64.startsWith('data:')
+      ? this.imageBase64
+      : `data:image/png;base64,${this.imageBase64}`;
   }
 
   private setupCanvas(): void {
-    if (!this.image || !this.ctx) return;
+    if (!this.image || !this.ctx || !this.canvasRef) {
+      return;
+    }
 
     const canvas = this.canvasRef.nativeElement;
     const maxWidth = canvas.parentElement?.clientWidth || 800;
+    const maxHeight = 600;
 
-    this.scale = Math.min(maxWidth / this.image.width, 1);
+    const scaleWidth = maxWidth / this.image.width;
+    const scaleHeight = maxHeight / this.image.height;
+    this.scale = Math.min(scaleWidth, scaleHeight, 1);
 
     canvas.width = this.image.width * this.scale;
     canvas.height = this.image.height * this.scale;
@@ -112,12 +126,16 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
 
   private annotateWords(): void {
     if (!this.ocrData.words || this.ocrData.words.length === 0) {
-      this.toastService.showWarning('No text was detected in the image');
       this.annotatedWords = [];
       return;
     }
 
-    this.annotatedWords = this.ocrData.words.map((word) => {
+    const wordsForThisImage = this.ocrData.words.filter(word => {
+      const wordImageIndex = word.imageIndex ?? 0;
+      return wordImageIndex === this.imageIndex;
+    });
+
+    this.annotatedWords = wordsForThisImage.map((word) => {
       const fieldType = this.findFieldForWord(word.text);
       const color = this.getColorForWord(word.text, fieldType);
 
@@ -132,12 +150,11 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
   private findFieldForWord(text: string): string | undefined {
     const normalized = text.toUpperCase().trim();
 
-    // Check against each field in verification result
     for (const check of this.verificationResult.fieldChecks) {
-      if (check.expected && check.expected.toUpperCase().includes(normalized)) {
-        return check.fieldType;
-      }
-      if (check.found && check.found.toUpperCase().includes(normalized)) {
+      const expected = check.expected?.toUpperCase();
+      const found = check.found?.toUpperCase();
+
+      if ((expected && expected.includes(normalized)) || (found && found.includes(normalized))) {
         return check.fieldType;
       }
     }
@@ -146,29 +163,27 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
   }
 
   private getColorForWord(text: string, fieldType?: string): string {
-    if (!fieldType) {
-      return '#06b6d4'; // Cyan for other text (brighter, more visible)
-    }
+    if (!fieldType) return '#06b6d4';
 
-    const check = this.verificationResult.fieldChecks.find((c) => c.fieldType === fieldType);
+    const check = this.verificationResult.fieldChecks.find(c => c.fieldType === fieldType);
     if (!check) return '#06b6d4';
 
-    switch (check.status) {
-      case MatchStatus.Match:
-        return '#10b981'; // Green
-      case MatchStatus.Mismatch:
-        return '#ef4444'; // Red
-      case MatchStatus.NotFound:
-        return '#ef4444'; // Red
-      default:
-        return '#06b6d4'; // Cyan
-    }
+    const colorMap: Record<MatchStatus, string> = {
+      [MatchStatus.Match]: '#10b981',
+      [MatchStatus.Mismatch]: '#ef4444',
+      [MatchStatus.NotFound]: '#ef4444',
+    };
+
+    return colorMap[check.status] || '#06b6d4';
   }
 
   private render(): void {
-    if (!this.ctx || !this.image) return;
+    if (!this.ctx || !this.image || !this.canvasRef) {
+      return;
+    }
 
-    this.ctx.clearRect(0, 0, this.canvasRef.nativeElement.width, this.canvasRef.nativeElement.height);
+    const canvas = this.canvasRef.nativeElement;
+    this.ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     this.ctx.drawImage(
       this.image,
@@ -199,29 +214,27 @@ export class ImageAnnotatorComponent implements AfterViewInit, OnChanges {
   }
 
   onMouseMove(event: MouseEvent): void {
-    if (!this.showAnnotations()) {
+    if (!this.showAnnotations() || !this.canvasRef) {
       this.tooltip.set(null);
       return;
     }
 
     const canvas = this.canvasRef.nativeElement;
     const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (event.clientX - rect.left) * scaleX;
+    const y = (event.clientY - rect.top) * scaleY;
 
     const word = this.findWordAtPosition(x, y);
 
-    if (word) {
-      this.tooltip.set({
-        text: word.text,
-        confidence: word.confidence,
-        fieldType: word.fieldType,
-        x: event.clientX,
-        y: event.clientY,
-      });
-    } else {
-      this.tooltip.set(null);
-    }
+    this.tooltip.set(word ? {
+      text: word.text,
+      confidence: word.confidence,
+      fieldType: word.fieldType,
+      x: event.clientX,
+      y: event.clientY,
+    } : null);
   }
 
   onMouseLeave(): void {

@@ -351,21 +351,34 @@ export class LabelVerifier implements ILabelVerifier {
   private verifyGovernmentWarning(extractedText: string): FieldCheck {
     const requiredSections = config.requiredTexts.governmentWarningSections;
 
-    // Use flexible keyword-based matching instead of exact phrase matching
-    // This handles OCR issues with line breaks and spacing
-    const foundSections = requiredSections.filter((section: string) => {
-      // For exact matches (short phrases), use exact matching
-      if (section.split(' ').length <= 3) {
-        return extractedText.includes(section);
-      }
+    // Extract just the government warning portion to compare against (reduces noise)
+    const govWarningStart = extractedText.indexOf('GOVERNMENT WARNING');
+    const govWarningText = govWarningStart >= 0
+      ? extractedText.substring(govWarningStart, Math.min(govWarningStart + 500, extractedText.length))
+      : extractedText;
 
-      // For longer phrases, check if most key words are present
-      const keywords = section.split(' ').filter(word => word.length > 3); // Skip short words like "TO", "A", "OF"
-      const foundKeywords = keywords.filter(keyword => extractedText.includes(keyword));
+    // Use token_set_ratio which is more forgiving of OCR errors and extra words
+    // It checks if the tokens/words from the section are present, ignoring order and extra text
+    // Threshold of 65% handles common OCR errors like "OPERATE" → "OPERAS"
+    const threshold = 65;
+    const sectionMatches = requiredSections.map((section: string) => {
+      // token_set_ratio: checks if all words in section are present (best for OCR errors)
+      const tokenScore = fuzzball.token_set_ratio(section, govWarningText);
 
-      // Require at least 80% of keywords to be present
-      return foundKeywords.length >= Math.ceil(keywords.length * config.verification.keywordMatchThreshold);
+      // partial_ratio: finds best substring match
+      const partialScore = fuzzball.partial_ratio(section, govWarningText);
+
+      // Use the better score
+      const score = Math.max(tokenScore, partialScore);
+
+      return {
+        section,
+        score,
+        found: score >= threshold
+      };
     });
+
+    const foundSections = sectionMatches.filter(m => m.found).map(m => m.section);
 
     // Require all sections to be present
     if (foundSections.length >= config.verification.governmentWarningMinSections) {
@@ -380,23 +393,30 @@ export class LabelVerifier implements ILabelVerifier {
 
     // If we found some sections but not all
     if (foundSections.length >= 4) {
+      const missingSections = sectionMatches.filter(m => !m.found);
+      const missingDetails = missingSections.map(m => `"${m.section}" (${m.score}%)`).join('; ');
+
       return {
         fieldType: FieldType.GovernmentWarning,
         status: MatchStatus.Mismatch,
-        message: `Government warning incomplete (found ${foundSections.length}/${requiredSections.length} required sections)`,
+        message: `Government warning incomplete (found ${foundSections.length}/${requiredSections.length} sections)`,
         expected: config.requiredTexts.governmentWarning,
-        found: `Partial warning text: ${foundSections.join(', ')}`,
+        found: `Missing sections: ${missingDetails}`,
       };
     }
 
-    // If we found minimal or no sections
+    // If we found minimal or no sections - show all scores for debugging
     if (extractedText.includes('WARNING')) {
+      const allScores = sectionMatches
+        .map(m => `"${m.section}": ${m.score}%${m.found ? ' ✓' : ' ✗'}`)
+        .join(' | ');
+
       return {
         fieldType: FieldType.GovernmentWarning,
         status: MatchStatus.Mismatch,
-        message: 'Warning text found but does not match required government warning',
+        message: `Warning text found but only ${foundSections.length}/${requiredSections.length} sections matched`,
         expected: config.requiredTexts.governmentWarning,
-        found: 'Incomplete or incorrect warning text',
+        found: `Section scores: ${allScores}`,
       };
     }
 

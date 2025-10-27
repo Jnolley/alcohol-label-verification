@@ -7,6 +7,9 @@ export interface VerificationRequest {
   /** Form data */
   formData: LabelFormData;
 
-  /** Image file to verify */
-  imageFile: File;
+  /** Primary image file to verify */
+  primaryImage: File | null;
+
+  /** Optional secondary image file */
+  secondaryImage?: File | null;
 }

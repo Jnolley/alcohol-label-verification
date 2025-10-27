@@ -1,4 +1,4 @@
-# Frontend Architecture - TTB Label Verification App
+ # Frontend Architecture - TTB Label Verification App
 
 **Framework:** Angular 19 (LTS) with TypeScript
 **State Management:** @ngrx/signals
