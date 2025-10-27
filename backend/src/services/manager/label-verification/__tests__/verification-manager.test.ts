@@ -5,7 +5,6 @@ import { ITextExtractor } from '../../../engine/ocr/interface/text-extractor.int
 import { ILabelVerifier } from '../../../engine/verification/interface/label-verifier.interface';
 import { FormData } from '../../../../common/contracts/form-data';
 import { VerificationResult } from '../../../../common/contracts/verification-result';
-import { FieldCheck } from '../../../../common/contracts/field-check';
 import { FieldType } from '../../../../common/enums/field-type';
 import { MatchStatus } from '../../../../common/enums/match-status';
 import { ExtractedText } from '../../../engine/ocr/contracts/extracted-text';
@@ -29,6 +28,7 @@ describe('VerificationManager', () => {
 
     mockTextExtractor = {
       extract: jest.fn(),
+      extractFromMultiple: jest.fn(),
     };
 
     mockLabelVerifier = {

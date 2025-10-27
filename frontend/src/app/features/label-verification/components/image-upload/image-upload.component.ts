@@ -20,26 +20,16 @@ export class ImageUploadComponent {
   error = signal<string | null>(null);
   isDragging = signal<boolean>(false);
 
-  readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  readonly MAX_FILE_SIZE = 10 * 1024 * 1024;
   readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
   readonly MAX_FILES = 2;
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const files = input.files;
-
-    if (!files || files.length === 0) {
+    if (!input.files || input.files.length === 0) {
       return;
     }
-
-    // Process each selected file
-    for (let i = 0; i < files.length; i++) {
-      if (this.images().length >= this.MAX_FILES) {
-        this.error.set(`Maximum ${this.MAX_FILES} images allowed`);
-        break;
-      }
-      this.processFile(files[i]);
-    }
+    this.processFiles(input.files);
   }
 
   clearSelection(): void {
@@ -74,18 +64,11 @@ export class ImageUploadComponent {
 
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) {
-      // Process dropped files
-      for (let i = 0; i < files.length; i++) {
-        if (this.images().length >= this.MAX_FILES) {
-          this.error.set(`Maximum ${this.MAX_FILES} images allowed`);
-          break;
-        }
-        this.processFile(files[i]);
-      }
+      this.processFiles(files);
       return;
     }
 
-    // Handle URL drops
+    // Handle URL drops (e.g., dragging images from web browser)
     const items = event.dataTransfer?.items;
     if (items) {
       for (let i = 0; i < items.length; i++) {
@@ -109,6 +92,16 @@ export class ImageUploadComponent {
           }
         }
       }
+    }
+  }
+
+  private processFiles(files: FileList): void {
+    for (let i = 0; i < files.length; i++) {
+      if (this.images().length >= this.MAX_FILES) {
+        this.error.set(`Maximum ${this.MAX_FILES} images allowed`);
+        break;
+      }
+      this.processFile(files[i]);
     }
   }
 

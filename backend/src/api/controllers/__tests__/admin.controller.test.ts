@@ -23,7 +23,7 @@ describe('AdminController', () => {
       netContentsValue: 750,
       netContentsUnit: 'ml',
     },
-    imageBase64: 'base64-encoded-image',
+    images: ['base64-encoded-image'],
     ocrData: {
       raw: 'Test Brand Bourbon 45% 750ml',
       normalized: 'test brand bourbon 45% 750ml',
