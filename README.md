@@ -102,9 +102,7 @@ cp .env.example .env
 
 **Start the backend:**
 ```bash
-npm run dev  # Development mode on http://localhost:3000
-# OR
-npm run build && npm start  # Production build
+npm run start  # Starts on http://localhost:3000
 ```
 
 ### Frontend Setup

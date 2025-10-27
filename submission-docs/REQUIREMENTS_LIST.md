@@ -58,7 +58,7 @@
     - [x] Source Code Repository: Upload to GitHub (or similar) with all source code and a README.
      - [x] README: Include setup steps, installation commands, OCR/AI tools used, assumptions, limitations, and run instructions.
     - [x] Deployed Application Link: Provide a URL for the live app (e.g., Vercel, Heroku).
-    - [ ] (Optional) Sample Test Evidence: Screenshots or video/gif of the app in action.
+    - [x] (Optional) Sample Test Evidence: Screenshots or video/gif of the app in action.
     - [ ] Submit via email with repository link, deployed app link, and any notes.
 
 - [x] **Evaluation Criteria**
