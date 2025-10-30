@@ -8,6 +8,7 @@ import { ExtractedText } from '../../ocr/contracts/extracted-text';
 import { INormalizer } from '../../../utility/normalization/interface/normalizer.interface';
 import config from '../../../../config';
 import * as fuzzball from 'fuzzball';
+import { isValidAlcoholType } from '../../../../config/alcohol-types';
 
 export class LabelVerifier implements ILabelVerifier {
   constructor(private readonly normalizer: INormalizer) {}
@@ -85,35 +86,47 @@ export class LabelVerifier implements ILabelVerifier {
     const normalizedType = this.removePunctuation(productType.toUpperCase().trim());
     const normalizedExtracted = this.removePunctuation(extractedText);
 
+    // First, verify the user input is a valid alcohol type
+    // This prevents matching random words like "Crystal" or "French"
+    if (!isValidAlcoholType(productType)) {
+      return {
+        fieldType: FieldType.ProductType,
+        status: MatchStatus.NotFound,
+        message: `"${productType}" is not a recognized alcohol type`,
+        expected: productType,
+      };
+    }
+
     // Check for word boundary match (not just substring)
     const typeWords = normalizedType.split(/\s+/);
     const wordBoundaryPattern = typeWords.map(word => `\\b${this.escapeRegex(word)}\\b`).join('\\s+');
     const regex = new RegExp(wordBoundaryPattern);
 
     if (regex.test(normalizedExtracted)) {
+      const foundText = this.extractMatchingText(normalizedType, extractedText);
       return {
         fieldType: FieldType.ProductType,
         status: MatchStatus.Match,
         message: 'Product type found on label',
         expected: productType,
-        found: productType,
+        found: foundText || productType,
       };
     }
 
-    // Fuzzy matching for OCR errors, but still require reasonable length match
+    // Fuzzy matching for OCR errors
     const score = fuzzball.partial_ratio(normalizedType, normalizedExtracted);
 
     if (score >= config.verification.fuzzyMatchThreshold) {
       const foundText = this.extractBestMatch(normalizedType, extractedText);
 
-      // Verify the found text is proportional to the search term
+      // Verify found text is proportional
       if (foundText && foundText.length >= normalizedType.length * config.verification.fuzzyMatchMinLength) {
         return {
           fieldType: FieldType.ProductType,
           status: MatchStatus.Match,
           message: 'Product type found on label',
           expected: productType,
-          found: foundText || productType,
+          found: foundText,
         };
       }
     }
@@ -127,7 +140,8 @@ export class LabelVerifier implements ILabelVerifier {
   }
 
   private verifyAlcoholContent(alcoholContent: number, extractedText: string): FieldCheck {
-    const percentageValues = this.extractPercentageValues(extractedText);
+    // Extract alcohol percentages (numbers near "%" or "ABV" or "ALC/VOL")
+    const percentageValues = this.extractAlcoholPercentages(extractedText);
 
     for (const foundValue of percentageValues) {
       const difference = Math.abs(foundValue - alcoholContent);
@@ -143,13 +157,14 @@ export class LabelVerifier implements ILabelVerifier {
       }
     }
 
-    if (this.containsNumber(extractedText, alcoholContent)) {
+    // If we found values but none matched, it's a mismatch
+    if (percentageValues.length > 0) {
       return {
         fieldType: FieldType.AlcoholContent,
-        status: MatchStatus.Match,
-        message: 'Alcohol content matches',
+        status: MatchStatus.Mismatch,
+        message: `Alcohol content mismatch: label shows ${percentageValues[0]}%, but you entered ${alcoholContent}%`,
         expected: `${alcoholContent}%`,
-        found: `${alcoholContent}%`,
+        found: `${percentageValues[0]}%`,
       };
     }
 
@@ -161,42 +176,34 @@ export class LabelVerifier implements ILabelVerifier {
     };
   }
 
-  private extractPercentageValues(text: string): number[] {
+  /**
+   * Extract alcohol percentages from text
+   * Only extracts numbers that are near alcohol-related keywords (%, ABV, ALC/VOL)
+   */
+  private extractAlcoholPercentages(text: string): number[] {
     const values: number[] = [];
-    let i = 0;
+    const normalized = text.toUpperCase();
 
-    while (i < text.length) {
-      if (text[i] === '%') {
-        let numberStr = '';
-        let j = i - 1;
-
-        while (j >= 0 && text[j] === ' ') {
-          j--;
-        }
-
-        while (j >= 0 && (this.isDigit(text[j]) || text[j] === '.')) {
-          numberStr = text[j] + numberStr;
-          j--;
-        }
-
-        if (numberStr) {
-          const value = parseFloat(numberStr);
-          if (!isNaN(value)) {
-            values.push(value);
-          }
-        }
+    // Pattern 1: Numbers followed by % (e.g., "40%", "40 %")
+    const percentPattern = /(\d+(?:\.\d+)?)\s*%/g;
+    let match;
+    while ((match = percentPattern.exec(normalized)) !== null) {
+      const value = parseFloat(match[1]);
+      if (!isNaN(value) && value >= 0 && value <= 100) {
+        values.push(value);
       }
-      i++;
+    }
+
+    // Pattern 2: Numbers near "ABV" or "ALC/VOL" keywords
+    const abvPattern = /(\d+(?:\.\d+)?)\s*(?:ABV|ALC\/VOL|ALCOHOL BY VOLUME)/gi;
+    while ((match = abvPattern.exec(normalized)) !== null) {
+      const value = parseFloat(match[1]);
+      if (!isNaN(value) && value >= 0 && value <= 100) {
+        values.push(value);
+      }
     }
 
     return values;
-  }
-
-  private containsNumber(text: string, target: number): boolean {
-    const targetStr = target.toString();
-    const targetWithDecimal = target.toFixed(1);
-
-    return text.includes(targetStr) || text.includes(targetWithDecimal);
   }
 
   private isDigit(char: string): boolean {
